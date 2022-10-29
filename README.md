@@ -21,7 +21,7 @@ Die App Mail und Passwort eingeben.
 
 ## Diskussion und Fragen
 
-<https://forum.iobroker.net/topic/59413/test-adapter-garmin>
+<https://forum.iobroker.net/topic/59466/test-adapter-vesync>
 
 ## Changelog
 
