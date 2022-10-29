@@ -228,6 +228,10 @@ class Vesync extends utils.Adapter {
             if (!res.data) {
               return;
             }
+            if (res.data.code != 0) {
+              this.log.error(JSON.stringify(res.data));
+              return;
+            }
             const data = res.data;
 
             const forceIndex = true;
