@@ -93,6 +93,7 @@ class Vesync extends utils.Adapter {
         this.log.debug(JSON.stringify(res.data));
         if (res.data.result) {
           this.session = res.data.result;
+          this.setState("info.connection", true, true);
         }
       })
       .catch((error) => {
@@ -207,7 +208,7 @@ class Vesync extends utils.Adapter {
             phoneOS: "iOS 14.8",
             timeZone: "Europe/Berlin",
             debugMode: false,
-            cid: device.id,
+            cid: device.cid,
             payload: {
               method: "getHumidifierStatus",
               data: {},
@@ -232,7 +233,7 @@ class Vesync extends utils.Adapter {
             const forceIndex = true;
             const preferedArrayName = null;
 
-            this.json2iob.parse(device.id + "." + element.path, data, {
+            this.json2iob.parse(device.cid + "." + element.path, data, {
               forceIndex: forceIndex,
               write: true,
               preferedArrayName: preferedArrayName,
