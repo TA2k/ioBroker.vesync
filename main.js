@@ -132,7 +132,7 @@ class Vesync extends utils.Adapter {
           this.log.info(`Found ${res.data.result.list.length} devices`);
           for (const device of res.data.result.list) {
             this.log.debug(JSON.stringify(device));
-            const id = device.device.cid + device.subDeviceNo;
+            const id = device.cid + device.subDeviceNo;
 
             this.deviceArray.push(id);
             const name = device.device.deviceName;
