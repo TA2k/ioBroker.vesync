@@ -132,9 +132,12 @@ class Vesync extends utils.Adapter {
           this.log.info(`Found ${res.data.result.list.length} devices`);
           for (const device of res.data.result.list) {
             this.log.debug(JSON.stringify(device));
-            const id = device.cid + device.subDeviceNo;
+            const id = device.cid;
+            // if (device.subDeviceNo) {
+            //   id += "." + device.subDeviceNo;
+            // }
 
-            this.deviceArray.push(id);
+            this.deviceArray.push(device);
             const name = device.deviceName;
 
             await this.setObjectNotExistsAsync(id, {
@@ -167,7 +170,7 @@ class Vesync extends utils.Adapter {
                 native: {},
               });
             });
-            this.json2iob.parse(id, device, { forceIndex: true });
+            this.json2iob.parse(id + ".general", device, { forceIndex: true });
           }
         }
       })
@@ -178,62 +181,94 @@ class Vesync extends utils.Adapter {
   }
 
   async updateDevices() {
-    const statusArray = [];
+    const statusArray = [
+      {
+        url: "https://smartapi.vesync.com/cloud/v2/deviceManaged/bypassV2",
+        path: "status",
+      },
+    ];
 
     for (const element of statusArray) {
-      // const url = element.url.replace("$id", id);
+      for (const device of this.deviceArray) {
+        // const url = element.url.replace("$id", id);
 
-      await this.requestClient({
-        method: element.method || "get",
-        url: element.url,
-        headers: {},
-      })
-        .then(async (res) => {
-          this.log.debug(JSON.stringify(res.data));
-          if (!res.data) {
-            return;
-          }
-          const data = res.data;
-
-          const forceIndex = true;
-          const preferedArrayName = null;
-
-          this.json2iob.parse(element.path, data, {
-            forceIndex: forceIndex,
-            write: true,
-            preferedArrayName: preferedArrayName,
-            channelName: element.desc,
-          });
-          // await this.setObjectNotExistsAsync(element.path + ".json", {
-          //   type: "state",
-          //   common: {
-          //     name: "Raw JSON",
-          //     write: false,
-          //     read: true,
-          //     type: "string",
-          //     role: "json",
-          //   },
-          //   native: {},
-          // });
-          // this.setState(element.path + ".json", JSON.stringify(data), true);
+        await this.requestClient({
+          method: "post",
+          url: element.url,
+          headers: {
+            "content-type": "application/json",
+            "user-agent": "ioBroker",
+            accept: "*/*",
+          },
+          data: JSON.stringify({
+            accountID: this.session.accountID,
+            method: "bypassV2",
+            deviceRegion: "EU",
+            phoneOS: "iOS 14.8",
+            timeZone: "Europe/Berlin",
+            debugMode: false,
+            cid: device.id,
+            payload: {
+              method: "getHumidifierStatus",
+              data: {},
+              source: "APP",
+            },
+            configModule: "",
+            traceId: "",
+            phoneBrand: "iPhone 8 Plus",
+            acceptLanguage: "de",
+            appVersion: "VeSync 4.1.10 build2",
+            userCountryCode: "DE",
+            token: this.session.token,
+          }),
         })
-        .catch((error) => {
-          if (error.response) {
-            if (error.response.status === 401) {
-              error.response && this.log.debug(JSON.stringify(error.response.data));
-              this.log.info(element.path + " receive 401 error. Refresh Token in 60 seconds");
-              this.refreshTokenTimeout && clearTimeout(this.refreshTokenTimeout);
-              this.refreshTokenTimeout = setTimeout(() => {
-                this.refreshToken();
-              }, 1000 * 60);
-
+          .then(async (res) => {
+            this.log.debug(JSON.stringify(res.data));
+            if (!res.data) {
               return;
             }
-          }
-          this.log.error(element.url);
-          this.log.error(error);
-          error.response && this.log.error(JSON.stringify(error.response.data));
-        });
+            const data = res.data;
+
+            const forceIndex = true;
+            const preferedArrayName = null;
+
+            this.json2iob.parse(device.id + "." + element.path, data, {
+              forceIndex: forceIndex,
+              write: true,
+              preferedArrayName: preferedArrayName,
+              channelName: element.desc,
+            });
+            // await this.setObjectNotExistsAsync(element.path + ".json", {
+            //   type: "state",
+            //   common: {
+            //     name: "Raw JSON",
+            //     write: false,
+            //     read: true,
+            //     type: "string",
+            //     role: "json",
+            //   },
+            //   native: {},
+            // });
+            // this.setState(element.path + ".json", JSON.stringify(data), true);
+          })
+          .catch((error) => {
+            if (error.response) {
+              if (error.response.status === 401) {
+                error.response && this.log.debug(JSON.stringify(error.response.data));
+                this.log.info(element.path + " receive 401 error. Refresh Token in 60 seconds");
+                this.refreshTokenTimeout && clearTimeout(this.refreshTokenTimeout);
+                this.refreshTokenTimeout = setTimeout(() => {
+                  this.refreshToken();
+                }, 1000 * 60);
+
+                return;
+              }
+            }
+            this.log.error(element.url);
+            this.log.error(error);
+            error.response && this.log.error(JSON.stringify(error.response.data));
+          });
+      }
     }
   }
 
