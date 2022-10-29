@@ -135,7 +135,7 @@ class Vesync extends utils.Adapter {
             const id = device.cid + device.subDeviceNo;
 
             this.deviceArray.push(id);
-            const name = device.device.deviceName;
+            const name = device.deviceName;
 
             await this.setObjectNotExistsAsync(id, {
               type: "device",
