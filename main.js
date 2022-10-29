@@ -186,6 +186,7 @@ class Vesync extends utils.Adapter {
       {
         url: "https://smartapi.vesync.com/cloud/v2/deviceManaged/bypassV2",
         path: "status",
+        desc: "Status of the device",
       },
     ];
 
@@ -215,7 +216,7 @@ class Vesync extends utils.Adapter {
               source: "APP",
             },
             configModule: "",
-            traceId: "",
+            traceId: Date.now(),
             phoneBrand: "iPhone 8 Plus",
             acceptLanguage: "de",
             appVersion: "VeSync 4.1.10 build2",
@@ -232,7 +233,10 @@ class Vesync extends utils.Adapter {
               this.log.error(JSON.stringify(res.data));
               return;
             }
-            const data = res.data;
+            let data = res.data.result;
+            if (data.result) {
+              data = data.result;
+            }
 
             const forceIndex = true;
             const preferedArrayName = null;
