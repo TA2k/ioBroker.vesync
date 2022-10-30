@@ -211,7 +211,7 @@ class Vesync extends utils.Adapter {
             debugMode: false,
             cid: device.cid,
             payload: {
-              method: "getHumidifierStatus",
+              method: this.deviceIdentifier(device),
               data: {},
               source: "APP",
             },
@@ -279,6 +279,16 @@ class Vesync extends utils.Adapter {
           });
       }
     }
+  }
+  deviceIdentifier(device) {
+    if (
+      device.deviceType.includes("LUH-") ||
+      device.deviceType.includes("Classic") ||
+      device.deviceType.includes("Dual")
+    ) {
+      return "getHumidifierStatus";
+    }
+    return "getHumidifierStatus";
   }
 
   async refreshToken() {
