@@ -19,6 +19,10 @@ Adapter for VeSync
 
 Die App Mail und Passwort eingeben.
 
+# Steuerung
+
+Geräte können via vesync.0.id.remote gesteuert werden
+
 ## Diskussion und Fragen
 
 <https://forum.iobroker.net/topic/59466/test-adapter-vesync>

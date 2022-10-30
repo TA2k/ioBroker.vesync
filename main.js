@@ -160,6 +160,8 @@ class Vesync extends utils.Adapter {
               { command: "Refresh", name: "True = Refresh" },
               { command: "setSwitch", name: "True = On, False = Off" },
               { command: "setTargetHumidity", name: "set Target Humidity", type: "number", def: 65, role: "level" },
+              { command: "setLevel-mist", name: "set Level Mist", type: "number", def: 10, role: "level" },
+              { command: "setLevel-wind", name: "set Level Wind", type: "number", def: 10, role: "level" },
             ];
             remoteArray.forEach((remote) => {
               this.setObjectNotExists(id + ".remote." + remote.command, {
@@ -288,9 +290,16 @@ class Vesync extends utils.Adapter {
     if (
       device.deviceType.includes("LUH-") ||
       device.deviceType.includes("Classic") ||
+      device.deviceType.includes("LV600") ||
       device.deviceType.includes("Dual")
     ) {
       return "getHumidifierStatus";
+    }
+    if (device.deviceType.includes("LAP-") || device.deviceType.includes("Core") || device.deviceType.includes("LV-")) {
+      return "getPurifierStatus";
+    }
+    if (device.deviceType.includes("LAP-") || device.deviceType.includes("Core") || device.deviceType.includes("LV-")) {
+      return "getPurifierStatus";
     }
     return "getHumidifierStatus";
   }
@@ -328,7 +337,9 @@ class Vesync extends utils.Adapter {
     if (state) {
       if (!state.ack) {
         const deviceId = id.split(".")[2];
-        const command = id.split(".")[4];
+        let command = id.split(".")[4];
+        const type = command.split("-")[1];
+        command = command.split("-")[0];
 
         if (id.split(".")[4] === "Refresh") {
           this.updateDevices();
@@ -341,6 +352,13 @@ class Vesync extends utils.Adapter {
         if (command === "setTargetHumidity") {
           data = {
             target_humidity: state.val,
+          };
+        }
+        if (command === "setLevel") {
+          data = {
+            level: state.val,
+            type: type,
+            id: 0,
           };
         }
         await this.requestClient({
@@ -386,6 +404,15 @@ class Vesync extends utils.Adapter {
           this.log.info("Update devices");
           await this.updateDevices();
         }, 10 * 1000);
+      } else {
+        const resultDict = { auto_target_humidity: "setTargetHumidity", enabled: "setSwitch" };
+        const idArray = id.split(".");
+        const stateName = idArray[idArray.length - 1];
+        const deviceId = id.split(".")[2];
+        if (resultDict[stateName]) {
+          const value = state.val;
+          await this.setStateAsync(deviceId + ".remote." + resultDict[stateName], value, true);
+        }
       }
     }
   }
