@@ -61,7 +61,7 @@ class Vesync extends utils.Adapter {
     }
     this.refreshTokenInterval = setInterval(() => {
       this.refreshToken();
-    }, (this.session.expires_in || 3600) * 1000);
+    }, 12 * 60 * 60 * 1000);
   }
   async login() {
     await this.requestClient({
@@ -306,7 +306,6 @@ class Vesync extends utils.Adapter {
 
   async refreshToken() {
     this.log.debug("Refresh token");
-
     await this.login();
   }
 
