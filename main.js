@@ -156,7 +156,11 @@ class Vesync extends utils.Adapter {
               native: {},
             });
 
-            const remoteArray = [{ command: "Refresh", name: "True = Refresh" }];
+            const remoteArray = [
+              { command: "Refresh", name: "True = Refresh" },
+              { command: "setSwitch", name: "True = On, False = Off" },
+              { command: "setTargetHumidity", name: "set Target Humidity", type: "number", def: 65, role: "level" },
+            ];
             remoteArray.forEach((remote) => {
               this.setObjectNotExists(id + ".remote." + remote.command, {
                 type: "state",
@@ -324,23 +328,52 @@ class Vesync extends utils.Adapter {
     if (state) {
       if (!state.ack) {
         const deviceId = id.split(".")[2];
-        const command = id.split(".")[5];
+        const command = id.split(".")[4];
 
         if (id.split(".")[4] === "Refresh") {
           this.updateDevices();
           return;
         }
-        const data = {
-          body: {},
-          header: {
-            command: "setAttributes",
-            said: deviceId,
-          },
+        let data = {
+          enabled: state.val,
+          id: 0,
         };
-        data.body[command] = state.val;
+        if (command === "setTargetHumidity") {
+          data = {
+            target_humidity: state.val,
+          };
+        }
         await this.requestClient({
           method: "post",
-          url: "",
+          url: "https://smartapi.vesync.com/cloud/v2/deviceManaged/bypassV2",
+          headers: {
+            Host: "smartapi.vesync.com",
+            accept: "*/*",
+            "content-type": "application/json",
+            "user-agent": "VeSync/4.1.10 (com.etekcity.vesyncPlatform; build:2; iOS 14.8.0) Alamofire/5.2.1",
+            "accept-language": "de-DE;q=1.0, uk-DE;q=0.9, en-DE;q=0.8",
+          },
+          data: JSON.stringify({
+            traceId: Date.now(),
+            debugMode: false,
+            acceptLanguage: "de",
+            method: "bypassV2",
+            cid: deviceId,
+            timeZone: "Europe/Berlin",
+            accountID: this.session.accountID,
+            payload: {
+              data: data,
+              source: "APP",
+              method: command,
+            },
+            appVersion: "VeSync 4.1.10 build2",
+            deviceRegion: "EU",
+            phoneBrand: "iPhone 8 Plus",
+            token: this.session.token,
+            phoneOS: "iOS 14.8",
+            configModule: "",
+            userCountryCode: "DE",
+          }),
         })
           .then((res) => {
             this.log.info(JSON.stringify(res.data));
