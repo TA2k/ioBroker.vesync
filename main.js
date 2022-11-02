@@ -159,6 +159,9 @@ class Vesync extends utils.Adapter {
             const remoteArray = [
               { command: "Refresh", name: "True = Refresh" },
               { command: "setSwitch", name: "True = Switch On, False = Switch Off" },
+              { command: "setDisplay", name: "True = On, False = Off" },
+              { command: "setChildLock", name: "True = On, False = Off" },
+              { command: "setPurifierMode", name: "sleep or auto", def:"auto",type:"string",role:"text" },
               { command: "setTargetHumidity", name: "set Target Humidity", type: "number", def: 65, role: "level" },
               { command: "setLevel-mist", name: "set Level Mist", type: "number", def: 10, role: "level" },
               { command: "setLevel-wind", name: "set Level Wind", type: "number", def: 10, role: "level" },
@@ -353,6 +356,21 @@ class Vesync extends utils.Adapter {
             target_humidity: state.val,
           };
         }
+        if (command === "setDisplay") {
+          data = {
+            state: state.val,
+          };
+        }
+        if (command === "setPurifierMode") {
+          data = {
+            mode: state.val,
+          };
+        }
+        if (command === "setChildLock") {
+          data = {
+            child_lock: state.val,
+          };
+        }
         if (command === "setLevel") {
           data = {
             level: state.val,
@@ -404,7 +422,7 @@ class Vesync extends utils.Adapter {
           await this.updateDevices();
         }, 10 * 1000);
       } else {
-        const resultDict = { auto_target_humidity: "setTargetHumidity", enabled: "setSwitch" };
+        const resultDict = { auto_target_humidity: "setTargetHumidity", enabled: "setSwitch",display: "setDisplay",child_lock:"setChildLock" };
         const idArray = id.split(".");
         const stateName = idArray[idArray.length - 1];
         const deviceId = id.split(".")[2];
