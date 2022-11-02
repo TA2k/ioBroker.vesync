@@ -422,7 +422,7 @@ class Vesync extends utils.Adapter {
           await this.updateDevices();
         }, 10 * 1000);
       } else {
-        const resultDict = { auto_target_humidity: "setTargetHumidity", enabled: "setSwitch",display: "setDisplay",child_lock:"setChildLock" };
+        const resultDict = { auto_target_humidity: "setTargetHumidity", enabled: "setSwitch",display: "setDisplay",child_lock:"setChildLock",level:"setLevel-wind" };
         const idArray = id.split(".");
         const stateName = idArray[idArray.length - 1];
         const deviceId = id.split(".")[2];
