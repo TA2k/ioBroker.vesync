@@ -161,10 +161,11 @@ class Vesync extends utils.Adapter {
               { command: "setSwitch", name: "True = Switch On, False = Switch Off" },
               { command: "setDisplay", name: "True = On, False = Off" },
               { command: "setChildLock", name: "True = On, False = Off" },
-              { command: "setPurifierMode", name: "sleep or auto", def:"auto",type:"string",role:"text" },
+              { command: "setPurifierMode", name: "sleep or auto", def: "auto", type: "string", role: "text" },
               { command: "setTargetHumidity", name: "set Target Humidity", type: "number", def: 65, role: "level" },
               { command: "setLevel-mist", name: "set Level Mist", type: "number", def: 10, role: "level" },
               { command: "setLevel-wind", name: "set Level Wind", type: "number", def: 10, role: "level" },
+              { command: "setLevel-warm", name: "set Level Warm", type: "number", def: 10, role: "level" },
             ];
             remoteArray.forEach((remote) => {
               this.setObjectNotExists(id + ".remote." + remote.command, {
@@ -173,7 +174,7 @@ class Vesync extends utils.Adapter {
                   name: remote.name || "",
                   type: remote.type || "boolean",
                   role: remote.role || "boolean",
-                  def: remote.def || false,
+                  def: remote.def != null ? remote.def : false,
                   write: true,
                   read: true,
                 },
@@ -422,7 +423,13 @@ class Vesync extends utils.Adapter {
           await this.updateDevices();
         }, 10 * 1000);
       } else {
-        const resultDict = { auto_target_humidity: "setTargetHumidity", enabled: "setSwitch",display: "setDisplay",child_lock:"setChildLock",level:"setLevel-wind" };
+        const resultDict = {
+          auto_target_humidity: "setTargetHumidity",
+          enabled: "setSwitch",
+          display: "setDisplay",
+          child_lock: "setChildLock",
+          level: "setLevel-wind",
+        };
         const idArray = id.split(".");
         const stateName = idArray[idArray.length - 1];
         const deviceId = id.split(".")[2];
