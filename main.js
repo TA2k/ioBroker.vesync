@@ -162,6 +162,7 @@ class Vesync extends utils.Adapter {
               { command: "setDisplay", name: "True = On, False = Off" },
               { command: "setChildLock", name: "True = On, False = Off" },
               { command: "setPurifierMode", name: "sleep or auto", def: "auto", type: "string", role: "text" },
+              { command: "setHumidityMode", name: "sleep, manual or auto", def: "auto", type: "string", role: "text" },
               { command: "setTargetHumidity", name: "set Target Humidity", type: "number", def: 65, role: "level" },
               { command: "setLevel-mist", name: "set Level Mist", type: "number", def: 10, role: "level" },
               { command: "setLevel-wind", name: "set Level Wind", type: "number", def: 10, role: "level" },
@@ -386,7 +387,7 @@ class Vesync extends utils.Adapter {
             state: state.val,
           };
         }
-        if (command === "setPurifierMode") {
+        if (command === "setPurifierMode" || command === "setHumidityMode") {
           data = {
             mode: state.val,
           };
