@@ -212,27 +212,7 @@ class Vesync extends utils.Adapter {
             "user-agent": "ioBroker",
             accept: "*/*",
           },
-          data: JSON.stringify({
-            accountID: this.session.accountID,
-            method: "bypassV2",
-            deviceRegion: "EU",
-            phoneOS: "iOS 14.8",
-            timeZone: "Europe/Berlin",
-            debugMode: false,
-            cid: device.cid,
-            payload: {
-              method: this.deviceIdentifier(device),
-              data: {},
-              source: "APP",
-            },
-            configModule: "",
-            traceId: Date.now(),
-            phoneBrand: "iPhone 8 Plus",
-            acceptLanguage: "de",
-            appVersion: "VeSync 4.1.10 build2",
-            userCountryCode: "DE",
-            token: this.session.token,
-          }),
+          data: JSON.stringify(this.deviceIdentifier(device)),
         })
           .then(async (res) => {
             this.log.debug(JSON.stringify(res.data));
@@ -291,21 +271,65 @@ class Vesync extends utils.Adapter {
     }
   }
   deviceIdentifier(device) {
+    if (device.deviceType.startsWith("CS")) {
+      return {
+        acceptLanguage: "de",
+        accountID: "5817236",
+        appVersion: "VeSync 4.1.52 build4",
+        cid: device.cid,
+        configModule: device.configModule,
+        debugMode: false,
+        jsonCmd: {
+          getStatus: "status",
+        },
+        method: "bypass",
+        phoneBrand: "iPhone 8 Plus",
+        phoneOS: "iOS 14.8",
+        pid: "8t8op7pcvzlsbosm",
+        timeZone: "Europe/Berlin",
+        token: this.session.token,
+        traceId: "1671277644221",
+        userCountryCode: "DE",
+        uuid: device.uuid,
+      };
+    }
+
+    let method = "getHumidifierStatus";
     if (
       device.deviceType.includes("LUH-") ||
       device.deviceType.includes("Classic") ||
       device.deviceType.includes("LV600") ||
       device.deviceType.includes("Dual")
     ) {
-      return "getHumidifierStatus";
+      method = "getHumidifierStatus";
     }
     if (device.deviceType.includes("LAP-") || device.deviceType.includes("Core") || device.deviceType.includes("LV-")) {
-      return "getPurifierStatus";
+      method = "getPurifierStatus";
     }
     if (device.deviceType.includes("LAP-") || device.deviceType.includes("Core") || device.deviceType.includes("LV-")) {
-      return "getPurifierStatus";
+      method = "getPurifierStatus";
     }
-    return "getHumidifierStatus";
+    return {
+      accountID: this.session.accountID,
+      method: "bypassV2",
+      deviceRegion: "EU",
+      phoneOS: "iOS 14.8",
+      timeZone: "Europe/Berlin",
+      debugMode: false,
+      cid: device.cid,
+      payload: {
+        method: method,
+        data: {},
+        source: "APP",
+      },
+      configModule: "",
+      traceId: Date.now(),
+      phoneBrand: "iPhone 8 Plus",
+      acceptLanguage: "de",
+      appVersion: "VeSync 4.1.10 build2",
+      userCountryCode: "DE",
+      token: this.session.token,
+    };
   }
 
   async refreshToken() {

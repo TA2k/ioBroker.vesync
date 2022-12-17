@@ -29,7 +29,7 @@ Geräte können via vesync.0.id.remote gesteuert werden
 
 ## Changelog
 
-### 0.0.1
+### 0.0.2
 
 - (TA2k) initial release
 
