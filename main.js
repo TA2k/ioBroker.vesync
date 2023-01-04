@@ -456,6 +456,7 @@ class Vesync extends utils.Adapter {
           display: "setDisplay",
           child_lock: "setChildLock",
           level: "setLevel-wind",
+          mode: "setPurifierMode",
         };
         const idArray = id.split(".");
         const stateName = idArray[idArray.length - 1];
