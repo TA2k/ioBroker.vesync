@@ -176,7 +176,7 @@ class Vesync extends utils.Adapter {
                 common: {
                   name: remote.name || "",
                   type: remote.type || "boolean",
-                  role: remote.role || "boolean",
+                  role: remote.role || "button",
                   def: remote.def != null ? remote.def : false,
                   write: true,
                   read: true,
