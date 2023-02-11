@@ -7,7 +7,7 @@
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
 const utils = require("@iobroker/adapter-core");
-const axios = require("axios");
+const axios = require("axios").default;
 const Json2iob = require("./lib/json2iob");
 const crypto = require("crypto");
 
@@ -161,9 +161,40 @@ class Vesync extends utils.Adapter {
             const remoteArray = [
               { command: "Refresh", name: "True = Refresh" },
               { command: "setSwitch", name: "True = Switch On, False = Switch Off" },
+              { command: "endCook", name: "True = EndCook" },
               { command: "setDisplay", name: "True = On, False = Off" },
               { command: "setChildLock", name: "True = On, False = Off" },
               { command: "setPurifierMode", name: "sleep or auto", def: "auto", type: "string", role: "text" },
+              {
+                command: "startCook",
+                name: "Start Cooking",
+                def: `{
+                  "accountId": "${this.session.accountID}",
+                  "cookTempDECP": 0,
+                  "hasPreheat": 0,
+                  "hasWarm": false,
+                  "imageUrl": "",
+                  "mode": "Chicken",
+                  "readyStart": true,
+                  "recipeId": 2,
+                  "recipeName": "Huhn",
+                  "recipeType": 3,
+                  "startAct": {
+                      "appointingTime": 0,
+                      "cookSetTime": 780,
+                      "cookTemp": 210,
+                      "cookTempDECP": 0,
+                      "imageUrl": "",
+                      "level": 0,
+                      "preheatTemp": 0,
+                      "shakeTime": 0,
+                      "targetTemp": 0
+                  },
+                  "tempUnit": "c"
+              }`,
+                type: "string",
+                role: "json",
+              },
               { command: "setHumidityMode", name: "sleep, manual or auto", def: "auto", type: "string", role: "text" },
               { command: "setTargetHumidity", name: "set Target Humidity", type: "number", def: 65, role: "level" },
               { command: "setLevel-mist", name: "set Level Mist", type: "number", def: 10, role: "level" },
@@ -277,7 +308,7 @@ class Vesync extends utils.Adapter {
     if (device.deviceType.startsWith("CS")) {
       return {
         acceptLanguage: "de",
-        accountID: "5817236",
+        accountID: this.session.accountID,
         appVersion: "VeSync 4.1.52 build4",
         cid: device.cid,
         configModule: device.configModule,
@@ -291,12 +322,34 @@ class Vesync extends utils.Adapter {
         pid: "8t8op7pcvzlsbosm",
         timeZone: "Europe/Berlin",
         token: this.session.token,
-        traceId: "1671277644221",
+        traceId: Date.now().toString(),
         userCountryCode: "DE",
         uuid: device.uuid,
       };
     }
-
+    if (device.deviceType.startsWith("LV")) {
+      return {
+        acceptLanguage: "de",
+        accountID: this.session.accountID,
+        appVersion: "VeSync 4.2.20 build12",
+        cid: device.cid,
+        configModule: device.configModule,
+        debugMode: false,
+        deviceRegion: "EU",
+        method: "bypassV2",
+        payload: {
+          data: {},
+          method: "getAirfryerStatus",
+          source: "APP",
+        },
+        phoneBrand: "iPhone 8 Plus",
+        phoneOS: "iOS 14.8",
+        timeZone: "Europe/Berlin",
+        token: this.session.token,
+        traceId: Date.now().toString(),
+        userCountryCode: "DE",
+      };
+    }
     let method = "getHumidifierStatus";
     if (
       device.deviceType.includes("LUH-") ||
@@ -375,7 +428,8 @@ class Vesync extends utils.Adapter {
           this.updateDevices();
           return;
         }
-        let data = {
+        let data;
+        data = {
           enabled: state.val,
           id: 0,
         };
@@ -405,6 +459,12 @@ class Vesync extends utils.Adapter {
             type: type,
             id: 0,
           };
+        }
+        if (command === "startCook") {
+          data = state.val;
+        }
+        if (command === "endCook") {
+          data = {};
         }
         await this.requestClient({
           method: "post",
