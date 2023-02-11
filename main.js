@@ -327,7 +327,7 @@ class Vesync extends utils.Adapter {
         uuid: device.uuid,
       };
     }
-    if (device.deviceType.startsWith("LV")) {
+    if (device.deviceType.startsWith("CA")) {
       return {
         acceptLanguage: "de",
         accountID: this.session.accountID,
@@ -461,7 +461,11 @@ class Vesync extends utils.Adapter {
           };
         }
         if (command === "startCook") {
-          data = state.val;
+          try {
+            data = JSON.parse(state.val);
+          } catch (error) {
+            this.log.error(error);
+          }
         }
         if (command === "endCook") {
           data = {};
