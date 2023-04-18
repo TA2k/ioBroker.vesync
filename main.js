@@ -134,8 +134,13 @@ class Vesync extends utils.Adapter {
         if (res.data.result && res.data.result.list) {
           this.log.info(`Found ${res.data.result.list.length} devices`);
           for (const device of res.data.result.list) {
+            if (!device.cid) {
+              this.log.warn(`Device without cid: ${JSON.stringify(device)}. Device will be ignored`);
+              continue;
+            }
             this.log.debug(JSON.stringify(device));
             const id = device.cid;
+
             // if (device.subDeviceNo) {
             //   id += "." + device.subDeviceNo;
             // }
