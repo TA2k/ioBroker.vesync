@@ -200,6 +200,25 @@ class Vesync extends utils.Adapter {
                 type: "string",
                 role: "json",
               },
+              {
+                command: "cookMode",
+                name: "Start cookMode ",
+                def: `{
+                  "accountId": "${this.session.accountID}",
+                  "appointmentTs": 0,
+                  "cookSetTemp": 175,
+                  "cookSetTime": 15,
+                  "cookStatus": "cooking",
+                  "customRecipe": "Manuell",
+                  "mode": "custom",
+                  "readyStart": true,
+                  "recipeId": 1,
+                  "recipeType": 3,
+                  "tempUnit": "celsius"
+              }`,
+                type: "string",
+                role: "json",
+              },
               { command: "setHumidityMode", name: "sleep, manual or auto", def: "auto", type: "string", role: "text" },
               { command: "setTargetHumidity", name: "set Target Humidity", type: "number", def: 65, role: "level" },
               { command: "setLevel-mist", name: "set Level Mist", type: "number", def: 10, role: "level" },
@@ -433,87 +452,128 @@ class Vesync extends utils.Adapter {
           this.updateDevices();
           return;
         }
-        let data;
-        data = {
-          enabled: state.val,
-          id: 0,
-        };
-        if (command === "setTargetHumidity") {
+
+        if (id.split(".")[4] === "cookMode") {
+          await this.requestClient({
+            method: "post",
+            url: "https://smartapi.vesync.com/cloud/v2/deviceManaged/bypassV2",
+            headers: {
+              Host: "smartapi.vesync.com",
+              accept: "*/*",
+              "content-type": "application/json",
+              "user-agent": "VeSync/4.1.10 (com.etekcity.vesyncPlatform; build:2; iOS 14.8.0) Alamofire/5.2.1",
+              "accept-language": "de-DE;q=1.0, uk-DE;q=0.9, en-DE;q=0.8",
+            },
+            data: JSON.stringify({
+              traceId: Date.now(),
+              debugMode: false,
+              acceptLanguage: "de",
+              cid: deviceId,
+              timeZone: "Europe/Berlin",
+              accountID: this.session.accountID,
+              jsonCmd: {
+                cookMode: JSON.parse(state.val),
+              },
+              method: "bypass",
+              appVersion: "VeSync 4.1.10 build2",
+              deviceRegion: "EU",
+              phoneBrand: "iPhone 8 Plus",
+              token: this.session.token,
+              phoneOS: "iOS 14.8",
+              configModule: "",
+              userCountryCode: "DE",
+            }),
+          })
+            .then((res) => {
+              this.log.info(JSON.stringify(res.data));
+            })
+            .catch(async (error) => {
+              this.log.error(error);
+              error.response && this.log.error(JSON.stringify(error.response.data));
+            });
+        } else {
+          let data;
           data = {
-            target_humidity: state.val,
-          };
-        }
-        if (command === "setDisplay") {
-          data = {
-            state: state.val,
-          };
-        }
-        if (command === "setPurifierMode" || command === "setHumidityMode") {
-          data = {
-            mode: state.val,
-          };
-        }
-        if (command === "setChildLock") {
-          data = {
-            child_lock: state.val,
-          };
-        }
-        if (command === "setLevel") {
-          data = {
-            level: state.val,
-            type: type,
+            enabled: state.val,
             id: 0,
           };
-        }
-        if (command === "startCook") {
-          try {
-            data = JSON.parse(state.val);
-          } catch (error) {
-            this.log.error(error);
+          if (command === "setTargetHumidity") {
+            data = {
+              target_humidity: state.val,
+            };
           }
-        }
-        if (command === "endCook") {
-          data = {};
-        }
-        await this.requestClient({
-          method: "post",
-          url: "https://smartapi.vesync.com/cloud/v2/deviceManaged/bypassV2",
-          headers: {
-            Host: "smartapi.vesync.com",
-            accept: "*/*",
-            "content-type": "application/json",
-            "user-agent": "VeSync/4.1.10 (com.etekcity.vesyncPlatform; build:2; iOS 14.8.0) Alamofire/5.2.1",
-            "accept-language": "de-DE;q=1.0, uk-DE;q=0.9, en-DE;q=0.8",
-          },
-          data: JSON.stringify({
-            traceId: Date.now(),
-            debugMode: false,
-            acceptLanguage: "de",
-            method: "bypassV2",
-            cid: deviceId,
-            timeZone: "Europe/Berlin",
-            accountID: this.session.accountID,
-            payload: {
-              data: data,
-              source: "APP",
-              method: command,
+          if (command === "setDisplay") {
+            data = {
+              state: state.val,
+            };
+          }
+          if (command === "setPurifierMode" || command === "setHumidityMode") {
+            data = {
+              mode: state.val,
+            };
+          }
+          if (command === "setChildLock") {
+            data = {
+              child_lock: state.val,
+            };
+          }
+          if (command === "setLevel") {
+            data = {
+              level: state.val,
+              type: type,
+              id: 0,
+            };
+          }
+          if (command === "startCook") {
+            try {
+              data = JSON.parse(state.val);
+            } catch (error) {
+              this.log.error(error);
+            }
+          }
+          if (command === "endCook") {
+            data = {};
+          }
+          await this.requestClient({
+            method: "post",
+            url: "https://smartapi.vesync.com/cloud/v2/deviceManaged/bypassV2",
+            headers: {
+              Host: "smartapi.vesync.com",
+              accept: "*/*",
+              "content-type": "application/json",
+              "user-agent": "VeSync/4.1.10 (com.etekcity.vesyncPlatform; build:2; iOS 14.8.0) Alamofire/5.2.1",
+              "accept-language": "de-DE;q=1.0, uk-DE;q=0.9, en-DE;q=0.8",
             },
-            appVersion: "VeSync 4.1.10 build2",
-            deviceRegion: "EU",
-            phoneBrand: "iPhone 8 Plus",
-            token: this.session.token,
-            phoneOS: "iOS 14.8",
-            configModule: "",
-            userCountryCode: "DE",
-          }),
-        })
-          .then((res) => {
-            this.log.info(JSON.stringify(res.data));
+            data: JSON.stringify({
+              traceId: Date.now(),
+              debugMode: false,
+              acceptLanguage: "de",
+              method: "bypassV2",
+              cid: deviceId,
+              timeZone: "Europe/Berlin",
+              accountID: this.session.accountID,
+              payload: {
+                data: data,
+                source: "APP",
+                method: command,
+              },
+              appVersion: "VeSync 4.1.10 build2",
+              deviceRegion: "EU",
+              phoneBrand: "iPhone 8 Plus",
+              token: this.session.token,
+              phoneOS: "iOS 14.8",
+              configModule: "",
+              userCountryCode: "DE",
+            }),
           })
-          .catch(async (error) => {
-            this.log.error(error);
-            error.response && this.log.error(JSON.stringify(error.response.data));
-          });
+            .then((res) => {
+              this.log.info(JSON.stringify(res.data));
+            })
+            .catch(async (error) => {
+              this.log.error(error);
+              error.response && this.log.error(JSON.stringify(error.response.data));
+            });
+        }
         this.refreshTimeout = setTimeout(async () => {
           this.log.info("Update devices");
           await this.updateDevices();
