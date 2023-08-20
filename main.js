@@ -8,7 +8,7 @@
 // you need to create an adapter
 const utils = require("@iobroker/adapter-core");
 const axios = require("axios").default;
-const Json2iob = require("./lib/json2iob");
+const Json2iob = require("json2iob");
 const crypto = require("crypto");
 
 class Vesync extends utils.Adapter {
