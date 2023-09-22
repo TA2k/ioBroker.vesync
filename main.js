@@ -229,7 +229,7 @@ class Vesync extends utils.Adapter {
               {
                 command: 'setProperty',
                 name: 'setProperty like PowerSwitch',
-                def: 'auto',
+
                 type: 'string',
                 role: 'json',
                 def: '{"powerSwitch_1":1}',
