@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "vesync",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "news": {
+      "0.0.5": {
+        "en": "added new BSD Sockets",
+        "de": "Neue BSD-Steckdosen hinzugefügt"
+      },
       "0.0.4": {
         "en": "added support for cookMode",
         "de": "Unterstützung für cookMode hinzugefügt"
