@@ -292,6 +292,10 @@ class Vesync extends utils.Adapter {
               return;
             }
             if (res.data.code != 0) {
+              if (res.data.code === -11300030) {
+                this.log.info('Device ' + device.cid + ' is offline');
+                return;
+              }
               this.log.error(JSON.stringify(res.data));
               return;
             }
