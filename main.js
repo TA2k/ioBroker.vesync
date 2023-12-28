@@ -43,6 +43,26 @@ class Vesync extends utils.Adapter {
       this.log.error('Please set username and password in the instance settings');
       return;
     }
+    this.terminalId = '';
+    const terminalIdState = await this.getStateAsync('terminalId');
+
+    if (terminalIdState && terminalIdState.val) {
+      this.terminalId = terminalIdState.val.toString();
+    } else {
+      this.terminalId = crypto.randomBytes(16).toString('hex').toUpperCase();
+      await this.setObjectNotExistsAsync('terminalId', {
+        type: 'state',
+        common: {
+          name: 'terminalId unique Id for Login',
+          type: 'string',
+          role: 'text',
+          read: true,
+          write: false,
+        },
+        native: {},
+      });
+      await this.setStateAsync('terminalId', this.terminalId, true);
+    }
 
     this.updateInterval = null;
     this.reLoginTimeout = null;
@@ -72,28 +92,35 @@ class Vesync extends utils.Adapter {
   async login() {
     await this.requestClient({
       method: 'post',
-      url: 'https://smartapi.vesync.com/cloud/v2/user/loginV2',
+      url: 'https://smartapi.vesync.com/user/api/accountManage/v3/appLoginV3',
       headers: {
-        Host: 'smartapi.vesync.com',
         accept: '*/*',
         'content-type': 'application/json',
-        'user-agent': 'VeSync/4.1.10 (iPhone; iOS 14.8; Scale/3.00)',
-        'accept-language': 'de-DE;q=1, uk-DE;q=0.9, en-DE;q=0.8',
+        'user-agent': 'VeSync/5.0.50 (com.etekcity.vesyncPlatform; build:16; iOS 16.7.2) Alamofire/5.2.1',
+        'accept-language': 'de-DE;q=1.0',
       },
-      data: JSON.stringify({
-        userType: '1',
-        phoneOS: 'ioBroker',
-        acceptLanguage: 'de',
-        phoneBrand: 'ioBroker',
-        password: crypto.createHash('md5').update(this.config.password).digest('hex'),
-        timeZone: 'Europe/Berlin',
-        token: '',
-        traceId: '',
-        appVersion: 'VeSync 4.1.10 build2',
-        accountID: '',
-        email: this.config.username,
-        method: 'loginV2',
-      }),
+      data: {
+        context: {
+          token: '.',
+          terminalId: this.terminalId,
+          osInfo: 'iOS16.7.2',
+          clientInfo: 'ioBroker',
+          traceId: '',
+          accountID: '.',
+          clientType: 'vesyncApp',
+          userCountryCode: 'US',
+          method: 'appLoginV3',
+          clientVersion: 'VeSync 5.0.50 build16',
+          acceptLanguage: 'de',
+          timeZone: 'Europe/Berlin',
+          debugMode: false,
+        },
+        data: {
+          userType: 1,
+          email: this.config.username,
+          password: crypto.createHash('md5').update(this.config.password).digest('hex'),
+        },
+      },
     })
       .then((res) => {
         this.log.debug(JSON.stringify(res.data));
