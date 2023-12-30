@@ -75,13 +75,19 @@ class Vesync extends utils.Adapter {
     if (this.session.token) {
       await this.getDeviceList();
       await this.updateDevices();
-      this.updateInterval = setInterval(async () => {
-        await this.updateDevices();
-      }, this.config.interval * 60 * 1000);
+      this.updateInterval = setInterval(
+        async () => {
+          await this.updateDevices();
+        },
+        this.config.interval * 60 * 1000,
+      );
     }
-    this.refreshTokenInterval = setInterval(() => {
-      this.refreshToken();
-    }, 12 * 60 * 60 * 1000);
+    this.refreshTokenInterval = setInterval(
+      () => {
+        this.refreshToken();
+      },
+      12 * 60 * 60 * 1000,
+    );
   }
   async login() {
     await this.requestClient({
@@ -341,7 +347,7 @@ class Vesync extends utils.Adapter {
             }
 
             const forceIndex = true;
-            const preferedArrayName = null;
+            const preferedArrayName = undefined;
 
             this.json2iob.parse(device.cid + '.' + element.path, data, {
               forceIndex: forceIndex,
@@ -479,10 +485,6 @@ class Vesync extends utils.Adapter {
           }
           if (res.data.code != 0) {
             this.log.error(status.url);
-            if (res.data.code === -11300030) {
-              this.log.info('Device ' + device.cid + ' is offline');
-              return;
-            }
             this.log.error(JSON.stringify(res.data));
             return;
           }
