@@ -173,6 +173,10 @@ class Vesync extends utils.Adapter {
             }
             this.log.debug(JSON.stringify(device));
             const id = device.cid;
+            if (device.deviceType.startsWith('ES')) {
+              this.log.info(`Found ${device.deviceType} ${device.deviceName} enable Weight and Health data fetching`);
+              this.fetchHealthData = true;
+            }
 
             // if (device.subDeviceNo) {
             //   id += "." + device.subDeviceNo;
@@ -267,12 +271,12 @@ class Vesync extends utils.Adapter {
               { command: 'setLevel-warm', name: 'set Level Warm', type: 'number', def: 10, role: 'level' },
             ];
             remoteArray.forEach((remote) => {
-              this.setObjectNotExists(id + '.remote.' + remote.command, {
+              this.extendObject(id + '.remote.' + remote.command, {
                 type: 'state',
                 common: {
                   name: remote.name || '',
                   type: remote.type || 'boolean',
-                  role: remote.role || 'button',
+                  role: remote.role || 'switch',
                   def: remote.def != null ? remote.def : false,
                   write: true,
                   read: true,
@@ -299,6 +303,28 @@ class Vesync extends utils.Adapter {
       },
     ];
 
+    if (this.fetchHealthData) {
+      statusArray.push({
+        url: 'https://smartapi.vesync.com/cloud/v1/user/getUserInfo',
+        path: 'userInfo',
+        desc: 'User Info',
+      });
+      statusArray.push({
+        url: 'https://smartapi.vesync.com/iot/api/fitnessScale/getWeighingDataV4',
+        path: 'weightingData',
+        desc: 'Weighting Data v4',
+      });
+      statusArray.push({
+        url: 'https://smartapi.vesync.com/cloud/v3/user/getHealthyHomeData',
+        path: 'healthHomeData',
+        desc: 'Health Home Data',
+      });
+      statusArray.push({
+        url: 'https://smartapi.vesync.com/cloud/v3/user/getAllSubUserV3',
+        path: 'subUser',
+        desc: 'Sub User Information v3',
+      });
+    }
     for (const element of statusArray) {
       for (const device of this.deviceArray) {
         // const url = element.url.replace("$id", id);
@@ -396,6 +422,7 @@ class Vesync extends utils.Adapter {
         uuid: device.uuid,
       };
     }
+
     if (device.deviceType.startsWith('CA')) {
       return {
         acceptLanguage: 'de',
