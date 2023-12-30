@@ -63,7 +63,7 @@ class Vesync extends utils.Adapter {
       });
       await this.setStateAsync('terminalId', this.terminalId, true);
     }
-
+    this.log.debug('terminalId: ' + this.terminalId);
     this.updateInterval = null;
     this.reLoginTimeout = null;
     this.refreshTokenTimeout = null;
@@ -75,19 +75,13 @@ class Vesync extends utils.Adapter {
     if (this.session.token) {
       await this.getDeviceList();
       await this.updateDevices();
-      this.updateInterval = setInterval(
-        async () => {
-          await this.updateDevices();
-        },
-        this.config.interval * 60 * 1000,
-      );
+      this.updateInterval = setInterval(async () => {
+        await this.updateDevices();
+      }, this.config.interval * 60 * 1000);
     }
-    this.refreshTokenInterval = setInterval(
-      () => {
-        this.refreshToken();
-      },
-      12 * 60 * 60 * 1000,
-    );
+    this.refreshTokenInterval = setInterval(() => {
+      this.refreshToken();
+    }, 12 * 60 * 60 * 1000);
   }
   async login() {
     await this.requestClient({
@@ -167,22 +161,31 @@ class Vesync extends utils.Adapter {
         if (res.data.result && res.data.result.list) {
           this.log.info(`Found ${res.data.result.list.length} devices`);
           for (const device of res.data.result.list) {
-            if (!device.cid) {
-              this.log.warn(`Device without cid: ${JSON.stringify(device)}. Device will be ignored`);
-              continue;
-            }
-            this.log.debug(JSON.stringify(device));
-            const id = device.cid;
             if (device.deviceType.startsWith('ES')) {
               this.log.info(`Found ${device.deviceType} ${device.deviceName} enable Weight and Health data fetching`);
-              this.fetchHealthData = true;
+              this.fetchHealthData = device.configModule;
+              await this.extendObjectAsync('healthData', {
+                type: 'channel',
+                common: {
+                  name: 'Health Data',
+                },
+                native: {},
+              });
+            }
+
+            this.log.debug(JSON.stringify(device));
+            let id = device.cid;
+            if (!device.cid) {
+              this.log.warn(`Device without cid: ${JSON.stringify(device)}. Device will be ignored`);
+              id = device.deviceName;
+            } else {
+              this.deviceArray.push(device);
             }
 
             // if (device.subDeviceNo) {
             //   id += "." + device.subDeviceNo;
             // }
 
-            this.deviceArray.push(device);
             const name = device.deviceName;
 
             await this.setObjectNotExistsAsync(id, {
@@ -270,20 +273,22 @@ class Vesync extends utils.Adapter {
               { command: 'setLevel-wind', name: 'set Level Wind', type: 'number', def: 10, role: 'level' },
               { command: 'setLevel-warm', name: 'set Level Warm', type: 'number', def: 10, role: 'level' },
             ];
-            remoteArray.forEach((remote) => {
-              this.extendObject(id + '.remote.' + remote.command, {
-                type: 'state',
-                common: {
-                  name: remote.name || '',
-                  type: remote.type || 'boolean',
-                  role: remote.role || 'switch',
-                  def: remote.def != null ? remote.def : false,
-                  write: true,
-                  read: true,
-                },
-                native: {},
+            if (device.cid) {
+              remoteArray.forEach((remote) => {
+                this.extendObject(id + '.remote.' + remote.command, {
+                  type: 'state',
+                  common: {
+                    name: remote.name || '',
+                    type: remote.type || 'boolean',
+                    role: remote.role || 'switch',
+                    def: remote.def != null ? remote.def : false,
+                    write: true,
+                    read: true,
+                  },
+                  native: {},
+                });
               });
-            });
+            }
             this.json2iob.parse(id + '.general', device, { forceIndex: true });
           }
         }
@@ -303,28 +308,6 @@ class Vesync extends utils.Adapter {
       },
     ];
 
-    if (this.fetchHealthData) {
-      statusArray.push({
-        url: 'https://smartapi.vesync.com/cloud/v1/user/getUserInfo',
-        path: 'userInfo',
-        desc: 'User Info',
-      });
-      statusArray.push({
-        url: 'https://smartapi.vesync.com/iot/api/fitnessScale/getWeighingDataV4',
-        path: 'weightingData',
-        desc: 'Weighting Data v4',
-      });
-      statusArray.push({
-        url: 'https://smartapi.vesync.com/cloud/v3/user/getHealthyHomeData',
-        path: 'healthHomeData',
-        desc: 'Health Home Data',
-      });
-      statusArray.push({
-        url: 'https://smartapi.vesync.com/cloud/v3/user/getAllSubUserV3',
-        path: 'subUser',
-        desc: 'Sub User Information v3',
-      });
-    }
     for (const element of statusArray) {
       for (const device of this.deviceArray) {
         // const url = element.url.replace("$id", id);
@@ -397,6 +380,119 @@ class Vesync extends utils.Adapter {
             error.response && this.log.error(JSON.stringify(error.response.data));
           });
       }
+    }
+    if (this.fetchHealthData) {
+      await this.getHealthData();
+    }
+  }
+  async getHealthData() {
+    const statusArray = [
+      {
+        url: 'https://smartapi.vesync.com/cloud/v1/user/getUserInfo',
+        path: 'userInfo',
+        desc: 'User Info',
+      },
+      {
+        url: 'https://smartapi.vesync.com/iot/api/fitnessScale/getWeighingDataV4',
+        path: 'weightingData',
+        desc: 'Weighting Data v4',
+        data: {
+          allData: true,
+          configModule: this.fetchHealthData,
+          page: 1,
+          pageSize: 100,
+          subUserID: null,
+          uploadTimestamp: null,
+          weightUnit: 'kg',
+        },
+      },
+      {
+        url: 'https://smartapi.vesync.com/cloud/v3/user/getHealthyHomeData',
+        path: 'healthHomeData',
+        desc: 'Health Home Data',
+      },
+      {
+        url: 'https://smartapi.vesync.com/cloud/v3/user/getAllSubUserV3',
+        path: 'subUser',
+        desc: 'Sub User Information v3',
+      },
+    ];
+    for (const status of statusArray) {
+      let data = {
+        method: status.url.split('/').pop(),
+        debugMode: false,
+        accountID: this.session.accountID,
+        acceptLanguage: 'de',
+        phoneOS: 'iOS16.7.2',
+        clientInfo: 'iPhone 8 Plus',
+        clientType: 'vesyncApp',
+        clientVersion: 'VeSync 5.0.50 build16',
+        traceId: Date.now().toString(),
+        appVersion: 'VeSync 5.0.50 build16',
+        token: this.session.token,
+        terminalId: this.terminalId,
+        phoneBrand: 'iPhone 8 Plus',
+        userCountryCode: 'DE',
+        timeZone: 'Europe/Berlin',
+        configModule: this.fetchHealthData,
+        isAsc: true,
+        afterIndex: null,
+        subUserType: 1,
+        pageSize: 300,
+      };
+      if (status.data) {
+        data = {
+          context: {
+            acceptLanguage: 'de',
+            accountID: this.session.accountID,
+            clientInfo: 'iPhone 8 Plus',
+            clientType: 'vesyncApp',
+            clientVersion: 'VeSync 5.0.50 build16',
+            debugMode: false,
+            method: 'getWeighingDataV4',
+            osInfo: 'iOS16.7.2',
+            terminalId: this.terminalId,
+            timeZone: 'Europe/Berlin',
+            token: this.session.token,
+            traceId: '',
+            userCountryCode: 'DE',
+          },
+          data: status.data,
+        };
+      }
+      await this.requestClient({
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: status.url,
+        headers: {
+          accept: '*/*',
+          'content-type': 'application/json',
+          'user-agent': 'ioBroker',
+          'accept-language': 'de-DE;q=1.0',
+        },
+        data: data,
+      })
+        .then((res) => {
+          this.log.debug(JSON.stringify(res.data));
+          if (!res.data) {
+            return;
+          }
+          if (res.data.code != 0) {
+            this.log.error(status.url);
+            if (res.data.code === -11300030) {
+              this.log.info('Device ' + device.cid + ' is offline');
+              return;
+            }
+            this.log.error(JSON.stringify(res.data));
+            return;
+          }
+          this.json2iob.parse('healthData.' + status.path, res.data.result, { preferedArrayName: 'nickname' });
+        })
+        .catch((error) => {
+          this.log.error(status.url);
+          this.log.error(error);
+          error.response && this.log.error(JSON.stringify(error.response.data));
+        });
     }
   }
   deviceIdentifier(device) {
