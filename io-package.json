@@ -3,6 +3,10 @@
     "name": "vesync",
     "version": "0.0.5",
     "news": {
+      "0.0.6": {
+        "en": "added health data and reduce relogin in the app",
+        "de": "Gesundheitsdaten hinzugefügt und erneutes Anmelden in der App reduziert"
+      },
       "0.0.5": {
         "en": "added new BSD Sockets",
         "de": "Neue BSD-Steckdosen hinzugefügt"
