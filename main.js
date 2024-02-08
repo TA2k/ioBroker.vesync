@@ -75,19 +75,13 @@ class Vesync extends utils.Adapter {
     if (this.session.token) {
       await this.getDeviceList();
       await this.updateDevices();
-      this.updateInterval = setInterval(
-        async () => {
-          await this.updateDevices();
-        },
-        this.config.interval * 60 * 1000,
-      );
+      this.updateInterval = setInterval(async () => {
+        await this.updateDevices();
+      }, this.config.interval * 60 * 1000);
     }
-    this.refreshTokenInterval = setInterval(
-      () => {
-        this.refreshToken();
-      },
-      12 * 60 * 60 * 1000,
-    );
+    this.refreshTokenInterval = setInterval(() => {
+      this.refreshToken();
+    }, 12 * 60 * 60 * 1000);
   }
   async login() {
     await this.requestClient({
@@ -478,17 +472,85 @@ class Vesync extends utils.Adapter {
         },
         data: data,
       })
-        .then((res) => {
+        .then(async (res) => {
           this.log.debug(JSON.stringify(res.data));
           if (!res.data) {
             return;
           }
           if (res.data.code != 0) {
             this.log.error(status.url);
+            if (res.data.code === -11300030) {
+              this.log.info('Device ' + device.cid + ' is offline');
+              return;
+            }
             this.log.error(JSON.stringify(res.data));
             return;
           }
           this.json2iob.parse('healthData.' + status.path, res.data.result, { preferedArrayName: 'nickname' });
+          if (status.path === 'subUser' && res.data.result && res.data.result.subUsers) {
+            for (const subUser of res.data.result.subUsers) {
+              await this.requestClient({
+                method: 'post',
+                maxBodyLength: Infinity,
+                url: 'https://smartapi.vesync.com/iot/api/fitnessScale/getWeighingDataV4',
+                headers: {
+                  accept: '*/*',
+                  'content-type': 'application/json',
+                  'user-agent': 'ioBroker',
+                  'accept-language': 'de-DE;q=1.0',
+                },
+                data: {
+                  context: {
+                    acceptLanguage: 'de',
+                    accountID: this.session.accountID,
+                    clientInfo: 'iPhone 8 Plus',
+                    clientType: 'vesyncApp',
+                    clientVersion: 'VeSync 5.0.50 build16',
+                    debugMode: false,
+                    method: 'getWeighingDataV4',
+                    osInfo: 'iOS16.7.2',
+                    terminalId: this.terminalId,
+                    timeZone: 'Europe/Berlin',
+                    token: this.session.token,
+                    traceId: '',
+                    userCountryCode: 'DE',
+                  },
+                  data: {
+                    allData: true,
+                    configModule: this.fetchHealthData,
+                    page: 1,
+                    pageSize: 100,
+                    subUserID: subUser.subUserID,
+                    uploadTimestamp: null,
+                    weightUnit: 'kg',
+                  },
+                },
+              })
+                .then(async (res) => {
+                  this.log.debug(JSON.stringify(res.data));
+                  if (!res.data) {
+                    return;
+                  }
+                  if (res.data.code != 0) {
+                    this.log.error(status.url);
+                    if (res.data.code === -11300030) {
+                      this.log.info('Device ' + device.cid + ' is offline');
+                      return;
+                    }
+                    this.log.error(JSON.stringify(res.data));
+                    return;
+                  }
+                  this.json2iob.parse('healthData.' + status.path + '.' + subUser.nickname, res.data.result, {
+                    preferedArrayName: 'nickname',
+                  });
+                })
+                .catch((error) => {
+                  this.log.error(status.url);
+                  this.log.error(error);
+                  error.response && this.log.error(JSON.stringify(error.response.data));
+                });
+            }
+          }
         })
         .catch((error) => {
           this.log.error(status.url);
