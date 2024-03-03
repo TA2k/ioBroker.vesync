@@ -75,13 +75,19 @@ class Vesync extends utils.Adapter {
     if (this.session.token) {
       await this.getDeviceList();
       await this.updateDevices();
-      this.updateInterval = setInterval(async () => {
-        await this.updateDevices();
-      }, this.config.interval * 60 * 1000);
+      this.updateInterval = setInterval(
+        async () => {
+          await this.updateDevices();
+        },
+        this.config.interval * 60 * 1000,
+      );
     }
-    this.refreshTokenInterval = setInterval(() => {
-      this.refreshToken();
-    }, 12 * 60 * 60 * 1000);
+    this.refreshTokenInterval = setInterval(
+      () => {
+        this.refreshToken();
+      },
+      12 * 60 * 60 * 1000,
+    );
   }
   async login() {
     await this.requestClient({
@@ -400,7 +406,7 @@ class Vesync extends utils.Adapter {
           allData: true,
           configModule: this.fetchHealthData,
           page: 1,
-          pageSize: 100,
+          pageSize: 300,
           subUserID: null,
           uploadTimestamp: null,
           weightUnit: 'kg',
