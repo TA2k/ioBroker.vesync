@@ -41,7 +41,7 @@
     "interval": {
       "type": "number",
       "newLine": true,
-      "min": 1,
+      "min": 0.1,
       "sm": 2,
       "label": {
         "en": "Update interval (in minutes)",
