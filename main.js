@@ -486,7 +486,7 @@ class Vesync extends utils.Adapter {
           if (res.data.code != 0) {
             this.log.error(status.url);
             if (res.data.code === -11300030) {
-              this.log.info('Device ' + device.cid + ' is offline');
+              this.log.info('Device ' + status.url + ' is offline');
               return;
             }
             this.log.error(JSON.stringify(res.data));
