@@ -125,6 +125,7 @@ class Vesync extends utils.Adapter {
       .then((res) => {
         this.log.debug(JSON.stringify(res.data));
         if (res.data.result) {
+          this.log.info('Login successful');
           this.session = res.data.result;
           this.setState('info.connection', true, true);
         } else {
