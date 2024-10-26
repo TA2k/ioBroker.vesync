@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "vesync",
-    "version": "0.0.7",
+    "version": "0.0.8",
     "news": {
+      "0.0.8": {
+        "en": "fix login",
+        "de": "zurück zur übersicht",
+        "ru": "исправить логин",
+        "pt": "corrigir login",
+        "nl": "fix login",
+        "fr": "correction de la connexion",
+        "it": "fix login",
+        "es": "corrección de inicio",
+        "pl": "naprawić logowanie",
+        "uk": "фіксувати логін",
+        "zh-cn": "固定登录"
+      },
       "0.0.7": {
         "en": "added health data and reduce relogin in the app",
         "de": "Gesundheitsdaten hinzugefügt und erneutes Anmelden in der App reduziert"
@@ -53,8 +66,12 @@
       "pl": "Adapter do VeSync",
       "zh-cn": "VeSync 适配器"
     },
-    "authors": ["TA2k <tombox2020@gmail.com>"],
-    "keywords": ["vesync"],
+    "authors": [
+      "TA2k <tombox2020@gmail.com>"
+    ],
+    "keywords": [
+      "vesync"
+    ],
     "license": "MIT",
     "platform": "Javascript/Node.js",
     "main": "main.js",
@@ -82,8 +99,12 @@
       }
     ]
   },
-  "encryptedNative": ["password"],
-  "protectedNative": ["password"],
+  "encryptedNative": [
+    "password"
+  ],
+  "protectedNative": [
+    "password"
+  ],
   "native": {
     "username": "",
     "password": "",
