@@ -27,6 +27,7 @@ class Vesync extends utils.Adapter {
 
     this.json2iob = new Json2iob(this);
     this.requestClient = axios.create();
+    this.clientVersion = 'VeSync 5.0.50 build16';
   }
 
   /**
@@ -110,7 +111,7 @@ class Vesync extends utils.Adapter {
           clientType: 'vesyncApp',
           userCountryCode: 'US',
           method: 'appLoginV3',
-          clientVersion: 'VeSync 5.0.50 build16',
+          clientVersion: this.clientVersion,
           acceptLanguage: 'de',
           timeZone: 'Europe/Berlin',
           debugMode: false,
@@ -434,9 +435,9 @@ class Vesync extends utils.Adapter {
         phoneOS: 'iOS16.7.2',
         clientInfo: 'iPhone 8 Plus',
         clientType: 'vesyncApp',
-        clientVersion: 'VeSync 5.0.50 build16',
+        clientVersion: this.clientVersion,
         traceId: Date.now().toString(),
-        appVersion: 'VeSync 5.0.50 build16',
+        appVersion: this.clientVersion,
         token: this.session.token,
         terminalId: this.terminalId,
         phoneBrand: 'iPhone 8 Plus',
@@ -455,14 +456,14 @@ class Vesync extends utils.Adapter {
             accountID: this.session.accountID,
             clientInfo: 'iPhone 8 Plus',
             clientType: 'vesyncApp',
-            clientVersion: 'VeSync 5.0.50 build16',
+            clientVersion: this.clientVersion,
             debugMode: false,
             method: 'getWeighingDataV4',
             osInfo: 'iOS16.7.2',
             terminalId: this.terminalId,
             timeZone: 'Europe/Berlin',
             token: this.session.token,
-            traceId: '',
+            traceId: Date.now().toString(),
             userCountryCode: 'DE',
           },
           data: status.data,
@@ -508,7 +509,7 @@ class Vesync extends utils.Adapter {
       return {
         acceptLanguage: 'de',
         accountID: this.session.accountID,
-        appVersion: 'VeSync 4.1.52 build4',
+        appVersion: this.clientVersion,
         cid: device.cid,
         configModule: device.configModule,
         debugMode: false,
@@ -531,7 +532,7 @@ class Vesync extends utils.Adapter {
       return {
         acceptLanguage: 'de',
         accountID: this.session.accountID,
-        appVersion: 'VeSync 4.2.20 build12',
+        appVersion: this.clientVersion,
         cid: device.cid,
         configModule: device.configModule,
         debugMode: false,
@@ -599,7 +600,7 @@ class Vesync extends utils.Adapter {
       traceId: Date.now(),
       phoneBrand: 'iPhone 8 Plus',
       acceptLanguage: 'de',
-      appVersion: 'VeSync 4.1.10 build2',
+      appVersion: this.clientVersion,
       userCountryCode: 'DE',
       token: this.session.token,
     };
@@ -669,7 +670,7 @@ class Vesync extends utils.Adapter {
                 cookMode: JSON.parse(state.val),
               },
               method: 'bypass',
-              appVersion: 'VeSync 4.1.10 build2',
+              appVersion: this.clientVersion,
               deviceRegion: 'EU',
               phoneBrand: 'iPhone 8 Plus',
               token: this.session.token,
@@ -758,7 +759,7 @@ class Vesync extends utils.Adapter {
                 source: 'APP',
                 method: command,
               },
-              appVersion: 'VeSync 4.1.10 build2',
+              appVersion: this.clientVersion,
               deviceRegion: 'EU',
               phoneBrand: 'iPhone 8 Plus',
               token: this.session.token,
