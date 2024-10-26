@@ -150,17 +150,18 @@ class Vesync extends utils.Adapter {
         'user-agent': 'ioBroker',
       },
       data: JSON.stringify({
-        acceptLanguage: 'de',
+        acceptLanguage: this.session.acceptLanguage,
+        traceId: Date.now().toString(),
         accountID: this.session.accountID,
-        appVersion: '1.1',
+        appVersion: 'VeSync 5.1.40 build9',
         method: 'devices',
         pageNo: 1,
         pageSize: 1000,
         phoneBrand: 'ioBroker',
         phoneOS: 'ioBroker',
+        debugMode: false,
         timeZone: 'Europe/Berlin',
         token: this.session.token,
-        traceId: '',
       }),
     })
       .then(async (res) => {
