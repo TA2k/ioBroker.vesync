@@ -1,6 +1,6 @@
 {
   "name": "iobroker.vesync",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Adapter for VeSync",
   "author": {
     "name": "TA2k",
@@ -19,8 +19,8 @@
     "node": ">= 18"
   },
   "dependencies": {
-    "@iobroker/adapter-core": "^3.2.2",
-    "axios": "^1.7.7",
+    "@iobroker/adapter-core": "^3.2.3",
+    "axios": "^1.7.9",
     "json2iob": "^2.6.12"
   },
   "devDependencies": {
@@ -28,17 +28,17 @@
     "@alcalzone/release-script-plugin-iobroker": "^3.7.2",
     "@alcalzone/release-script-plugin-license": "^3.7.0",
     "@alcalzone/release-script-plugin-manual-review": "^3.7.0",
-    "@eslint/eslintrc": "^3.1.0",
-    "@eslint/js": "^9.13.0",
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.17.0",
     "@iobroker/testing": "^5.0.0",
     "@tsconfig/node18": "^18.2.4",
-    "@types/node": "^22.8.1",
-    "eslint": "^9.13.0",
+    "@types/node": "^22.10.2",
+    "eslint": "^9.17.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
-    "globals": "^15.11.0",
-    "prettier": "^3.3.3",
-    "typescript": "~5.6.3"
+    "globals": "^15.14.0",
+    "prettier": "^3.4.2",
+    "typescript": "~5.7.2"
   },
   "main": "main.js",
   "files": [
