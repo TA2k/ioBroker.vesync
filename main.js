@@ -479,6 +479,7 @@ class Vesync extends utils.Adapter {
           if (res.data.code != 0) {
             this.log.error(status.url);
             if (res.data.code === -11300030) {
+              //eslint-disable-next-line
               this.log.info('Device ' + device.cid + ' is offline');
               return;
             }
@@ -615,6 +616,7 @@ class Vesync extends utils.Adapter {
       this.refreshTokenInterval && clearInterval(this.refreshTokenInterval);
       callback();
     } catch (e) {
+      this.log.error(e);
       callback();
     }
   }
