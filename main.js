@@ -558,6 +558,9 @@ class Vesync extends utils.Adapter {
     if (device.deviceType.includes('LAP-') || device.deviceType.includes('Core') || device.deviceType.includes('LV-')) {
       method = 'getPurifierStatus';
     }
+    if (device.deviceType.startsWith('WHOGPLUG') || device.deviceType.startsWith('WYZYOG')) {
+      method = 'getOutletStatus';
+    }
     if (device.deviceType.startsWith('BS')) {
       method = 'getProperty';
       data = {
