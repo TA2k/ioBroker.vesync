@@ -1,6 +1,6 @@
 {
   "name": "iobroker.vesync",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Adapter for VeSync",
   "author": {
     "name": "TA2k",
@@ -19,26 +19,26 @@
     "node": ">= 18"
   },
   "dependencies": {
-    "@iobroker/adapter-core": "^3.2.3",
-    "axios": "^1.7.9",
-    "json2iob": "^2.6.12"
+    "@iobroker/adapter-core": "^3.3.2",
+    "axios": "^1.13.2",
+    "json2iob": "^2.6.21"
   },
   "devDependencies": {
-    "@alcalzone/release-script": "^3.8.0",
-    "@alcalzone/release-script-plugin-iobroker": "^3.7.2",
-    "@alcalzone/release-script-plugin-license": "^3.7.0",
-    "@alcalzone/release-script-plugin-manual-review": "^3.7.0",
-    "@eslint/eslintrc": "^3.2.0",
-    "@eslint/js": "^9.17.0",
-    "@iobroker/testing": "^5.0.0",
-    "@tsconfig/node18": "^18.2.4",
-    "@types/node": "^22.10.2",
-    "eslint": "^9.17.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-prettier": "^5.2.1",
-    "globals": "^15.14.0",
-    "prettier": "^3.4.2",
-    "typescript": "~5.7.2"
+    "@alcalzone/release-script": "^5.0.0",
+    "@alcalzone/release-script-plugin-iobroker": "^4.0.0",
+    "@alcalzone/release-script-plugin-license": "^4.0.0",
+    "@alcalzone/release-script-plugin-manual-review": "^4.0.0",
+    "@eslint/eslintrc": "^3.3.3",
+    "@eslint/js": "^9.39.2",
+    "@iobroker/testing": "^5.2.2",
+    "@tsconfig/node18": "^18.2.6",
+    "@types/node": "^25.0.6",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "globals": "^17.0.0",
+    "prettier": "^3.7.4",
+    "typescript": "~5.9.3"
   },
   "main": "main.js",
   "files": [
@@ -58,7 +58,7 @@
     "check": "tsc --noEmit -p tsconfig.check.json",
     "lint": "eslint .",
     "translate": "translate-adapter",
-    "release": "release-script --all"
+    "release": "release-script"
   },
   "bugs": {
     "url": "https://github.com/TA2k/ioBroker.vesync/issues"
