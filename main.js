@@ -11,6 +11,12 @@ const axios = require('axios').default;
 const Json2iob = require('json2iob');
 const crypto = require('crypto');
 
+// VeSync API version constants (from APK 5.7.80)
+const VESYNC_APP_VERSION = '5.7.80';
+const VESYNC_APP_BUILD = '693';
+const VESYNC_APP_VERSION_FULL = `VeSync ${VESYNC_APP_VERSION} build${VESYNC_APP_BUILD}`;
+const VESYNC_USER_AGENT = `VeSync/${VESYNC_APP_VERSION} (com.etekcity.vesyncPlatform; build:${VESYNC_APP_BUILD}; Android 14)`;
+
 class Vesync extends utils.Adapter {
   /**
    * @param {Partial<utils.AdapterOptions>} [options={}]
@@ -96,13 +102,13 @@ class Vesync extends utils.Adapter {
       headers: {
         accept: '*/*',
         'content-type': 'application/json',
-        'user-agent': 'VeSync/5.0.50 (com.etekcity.vesyncPlatform; build:16; iOS 16.7.2) Alamofire/5.2.1',
+        'user-agent': VESYNC_USER_AGENT,
         'accept-language': 'de-DE;q=1.0',
       },
       data: {
         timeZone: 'Europe/Berlin',
         acceptLanguage: 'de',
-        appVersion: '2.5.1',
+        appVersion: VESYNC_APP_VERSION,
         phoneBrand: 'SM N9005',
         phoneOS: 'Android',
         traceId: Date.now().toString(),
@@ -144,7 +150,7 @@ class Vesync extends utils.Adapter {
         acceptLanguage: this.session.acceptLanguage,
         traceId: Date.now().toString(),
         accountID: this.session.accountID,
-        appVersion: 'VeSync 5.1.40 build9',
+        appVersion: VESYNC_APP_VERSION_FULL,
         method: 'devices',
         pageNo: 1,
         pageSize: 1000,
@@ -425,9 +431,9 @@ class Vesync extends utils.Adapter {
         phoneOS: 'iOS16.7.2',
         clientInfo: 'iPhone 8 Plus',
         clientType: 'vesyncApp',
-        clientVersion: 'VeSync 5.0.50 build16',
+        clientVersion: VESYNC_APP_VERSION_FULL,
         traceId: Date.now().toString(),
-        appVersion: 'VeSync 5.0.50 build16',
+        appVersion: VESYNC_APP_VERSION_FULL,
         token: this.session.token,
         terminalId: this.terminalId,
         phoneBrand: 'iPhone 8 Plus',
@@ -446,7 +452,7 @@ class Vesync extends utils.Adapter {
             accountID: this.session.accountID,
             clientInfo: 'iPhone 8 Plus',
             clientType: 'vesyncApp',
-            clientVersion: 'VeSync 5.0.50 build16',
+            clientVersion: VESYNC_APP_VERSION_FULL,
             debugMode: false,
             method: 'getWeighingDataV4',
             osInfo: 'iOS16.7.2',
@@ -500,7 +506,7 @@ class Vesync extends utils.Adapter {
       return {
         acceptLanguage: 'de',
         accountID: this.session.accountID,
-        appVersion: 'VeSync 4.1.52 build4',
+        appVersion: VESYNC_APP_VERSION_FULL,
         cid: device.cid,
         configModule: device.configModule,
         debugMode: false,
@@ -523,7 +529,7 @@ class Vesync extends utils.Adapter {
       return {
         acceptLanguage: 'de',
         accountID: this.session.accountID,
-        appVersion: 'VeSync 4.2.20 build12',
+        appVersion: VESYNC_APP_VERSION_FULL,
         cid: device.cid,
         configModule: device.configModule,
         debugMode: false,
@@ -594,7 +600,7 @@ class Vesync extends utils.Adapter {
       traceId: Date.now(),
       phoneBrand: 'iPhone 8 Plus',
       acceptLanguage: 'de',
-      appVersion: 'VeSync 4.1.10 build2',
+      appVersion: VESYNC_APP_VERSION_FULL,
       userCountryCode: 'DE',
       token: this.session.token,
     };
@@ -650,7 +656,7 @@ class Vesync extends utils.Adapter {
               Host: 'smartapi.vesync.com',
               accept: '*/*',
               'content-type': 'application/json',
-              'user-agent': 'VeSync/4.1.10 (com.etekcity.vesyncPlatform; build:2; iOS 14.8.0) Alamofire/5.2.1',
+              'user-agent': VESYNC_USER_AGENT,
               'accept-language': 'de-DE;q=1.0, uk-DE;q=0.9, en-DE;q=0.8',
             },
             data: JSON.stringify({
@@ -664,7 +670,7 @@ class Vesync extends utils.Adapter {
                 cookMode: JSON.parse(state.val),
               },
               method: 'bypass',
-              appVersion: 'VeSync 4.1.10 build2',
+              appVersion: VESYNC_APP_VERSION_FULL,
               deviceRegion: 'EU',
               phoneBrand: 'iPhone 8 Plus',
               token: this.session.token,
@@ -737,7 +743,7 @@ class Vesync extends utils.Adapter {
               Host: 'smartapi.vesync.com',
               accept: '*/*',
               'content-type': 'application/json',
-              'user-agent': 'VeSync/4.1.10 (com.etekcity.vesyncPlatform; build:2; iOS 14.8.0) Alamofire/5.2.1',
+              'user-agent': VESYNC_USER_AGENT,
               'accept-language': 'de-DE;q=1.0, uk-DE;q=0.9, en-DE;q=0.8',
             },
             data: JSON.stringify({
@@ -753,7 +759,7 @@ class Vesync extends utils.Adapter {
                 source: 'APP',
                 method: command,
               },
-              appVersion: 'VeSync 4.1.10 build2',
+              appVersion: VESYNC_APP_VERSION_FULL,
               deviceRegion: 'EU',
               phoneBrand: 'iPhone 8 Plus',
               token: this.session.token,
