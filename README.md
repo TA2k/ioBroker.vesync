@@ -111,6 +111,12 @@ Stop:
 <https://forum.iobroker.net/topic/59466/test-adapter-vesync>
 
 ## Changelog
+
+### **WORK IN PROGRESS**
+
+- fix login
+- add new devices
+
 ### 0.0.10 (2026-01-11)
 
 - fix login
