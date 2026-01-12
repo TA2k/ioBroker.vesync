@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "vesync",
-    "version": "0.0.10",
+    "version": "1.0.0",
     "news": {
+      "1.0.0": {
+        "en": "fix login\nadd new devices",
+        "de": "zurück zur übersicht\nneue geräte hinzufügen",
+        "ru": "исправить логин\nдобавить новые устройства",
+        "pt": "corrigir login\nadicionar novos dispositivos",
+        "nl": "fix login\nnieuwe apparaten toevoegen",
+        "fr": "correction de la connexion\najouter de nouveaux périphériques",
+        "it": "fix login\naggiungere nuovi dispositivi",
+        "es": "corrección de inicio\nañadir nuevos dispositivos",
+        "pl": "naprawić logowanie\ndodawanie nowych urządzeń",
+        "uk": "фіксувати логін\nдодати нові пристрої",
+        "zh-cn": "固定登录\n添加新设备"
+      },
       "0.0.10": {
         "en": "fix login",
         "de": "zurück zur übersicht",
@@ -53,18 +66,6 @@
       "0.0.4": {
         "en": "added support for cookMode",
         "de": "Unterstützung für cookMode hinzugefügt"
-      },
-      "0.0.3": {
-        "en": "initial release",
-        "de": "Erstveröffentlichung",
-        "ru": "Начальная версия",
-        "pt": "lançamento inicial",
-        "nl": "Eerste uitgave",
-        "fr": "Première version",
-        "it": "Versione iniziale",
-        "es": "Versión inicial",
-        "pl": "Pierwsze wydanie",
-        "zh-cn": "首次出版"
       }
     },
     "titleLang": {
