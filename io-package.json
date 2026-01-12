@@ -1,9 +1,9 @@
 {
   "common": {
     "name": "vesync",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "news": {
-      "1.0.1": {
+      "1.0.2": {
         "en": "fix login\nadd new devices",
         "de": "zurück zur übersicht\nneue geräte hinzufügen",
         "ru": "исправить логин\nдобавить новые устройства",
