@@ -137,23 +137,26 @@ class Vesync extends utils.Adapter {
     };
   }
 
-  // Step 1: Get Authorization Code
+  // Step 1: Get Authorization Code (always use EU server)
   async getAuthorizationCode() {
-    this.log.info('Step 1: Getting authorization code...');
+    const region = this.config.region || 'EU';
+    this.log.info(`Step 1: Getting authorization code (region: ${region})...`);
+    const apiUrl = region === 'EU' ? VESYNC_API_BASE_URL_EU : VESYNC_API_BASE_URL_US;
     const requestBody = {
       ...this.buildBaseRequest('authByPWDOrOTM'),
       email: this.config.username,
       password: crypto.createHash('md5').update(this.config.password).digest('hex'),
       authProtocolType: 'generic',
+      userCountryCode: region,
     };
 
-    this.log.debug(`Auth request URL: ${VESYNC_API_BASE_URL_US}/globalPlatform/api/accountAuth/v1/authByPWDOrOTM`);
+    this.log.debug(`Auth request URL: ${apiUrl}/globalPlatform/api/accountAuth/v1/authByPWDOrOTM`);
     this.log.debug(`Auth request body: ${JSON.stringify({ ...requestBody, password: '***' })}`);
 
     try {
       const response = await this.requestClient({
         method: 'post',
-        url: `${VESYNC_API_BASE_URL_US}/globalPlatform/api/accountAuth/v1/authByPWDOrOTM`,
+        url: `${apiUrl}/globalPlatform/api/accountAuth/v1/authByPWDOrOTM`,
         headers: {
           'Content-Type': 'application/json',
           'User-Agent': VESYNC_USER_AGENT,
@@ -183,21 +186,23 @@ class Vesync extends utils.Adapter {
 
   // Step 2: Exchange Authorization Code for Token
   async loginWithAuthorizeCode(authorizeCode, accountID) {
-    this.log.info('Step 2: Exchanging authorization code for token...');
+    const region = this.config.region || 'EU';
+    const apiUrl = region === 'EU' ? VESYNC_API_BASE_URL_EU : VESYNC_API_BASE_URL_US;
+    this.log.info(`Step 2: Exchanging authorization code for token (region: ${region})...`);
     const requestBody = {
       ...this.buildBaseRequest('loginByAuthorizeCode4Vesync'),
       accountID: accountID,
       authorizeCode: authorizeCode,
-      userCountryCode: this.config.region || 'EU',
+      userCountryCode: region,
     };
 
-    this.log.debug(`Token request URL: ${VESYNC_API_BASE_URL_US}/user/api/accountManage/v1/loginByAuthorizeCode4Vesync`);
+    this.log.debug(`Token request URL: ${apiUrl}/user/api/accountManage/v1/loginByAuthorizeCode4Vesync`);
     this.log.debug(`Token request body: ${JSON.stringify(requestBody)}`);
 
     try {
       const response = await this.requestClient({
         method: 'post',
-        url: `${VESYNC_API_BASE_URL_US}/user/api/accountManage/v1/loginByAuthorizeCode4Vesync`,
+        url: `${apiUrl}/user/api/accountManage/v1/loginByAuthorizeCode4Vesync`,
         headers: {
           'Content-Type': 'application/json',
           'User-Agent': VESYNC_USER_AGENT,
@@ -218,14 +223,9 @@ class Vesync extends utils.Adapter {
           acceptLanguage: response.data.result.acceptLanguage || 'de',
         };
       } else {
-        // Handle cross-region error - check for bizToken in response (works for all region error codes)
-        this.log.debug(`Non-zero response code: ${response.data.code}, checking for bizToken...`);
-        this.log.debug(`result: ${JSON.stringify(response.data.result)}`);
-
-        // Case 1: bizToken in result - standard cross-region handling
+        // Handle cross-region error - check for bizToken in response
         if (response.data.result && response.data.result.bizToken) {
-          this.log.warn(`Cross-region detected (code: ${response.data.code}, msg: ${response.data.msg})`);
-          this.log.info(`bizToken found, countryCode: ${response.data.result.countryCode}, currentRegion: ${response.data.result.currentRegion}`);
+          this.log.info(`Cross-region detected, bizToken received for retry`);
           return {
             crossRegion: true,
             countryCode: response.data.result.countryCode,
@@ -234,22 +234,7 @@ class Vesync extends utils.Adapter {
           };
         }
 
-        // Case 2: Region conflict error with null result - try opposite region without bizToken
-        // Error codes: -11261022 (access region conflict), -11260022 (cross region)
-        const regionConflictCodes = [-11261022, -11260022];
-        if (regionConflictCodes.includes(response.data.code) ||
-            (response.data.msg && response.data.msg.toLowerCase().includes('region'))) {
-          this.log.warn(`Region conflict error (code: ${response.data.code}) with no bizToken - will retry with different region`);
-          // Signal to retry with opposite region
-          const currentRegion = this.config.region || 'EU';
-          const oppositeRegion = currentRegion === 'EU' ? 'US' : 'EU';
-          return {
-            regionConflict: true,
-            tryRegion: oppositeRegion,
-          };
-        }
-
-        this.log.error(`No bizToken in response and not a region error, login failed`);
+        this.log.error(`Login failed: ${response.data.msg} (code: ${response.data.code})`);
         throw new Error(`Login failed: ${response.data.msg} (code: ${response.data.code})`);
       }
     } catch (error) {
@@ -261,15 +246,19 @@ class Vesync extends utils.Adapter {
   }
 
   // Step 2 Retry: With bizToken for cross-region
-  async loginWithAuthorizeCodeRetry(authorizeCode, accountID, bizToken, countryCode) {
-    this.log.info('Step 2 Retry: Exchanging with bizToken for cross-region...');
+  // IMPORTANT: Must use region-specific API URL for cross-region retry!
+  async loginWithAuthorizeCodeRetry(authorizeCode, accountID, bizToken, countryCode, currentRegion) {
+    // Use region-specific API URL - this is critical for cross-region to work!
+    const apiUrl = currentRegion === 'EU' ? VESYNC_API_BASE_URL_EU : VESYNC_API_BASE_URL_US;
+    this.log.info(`Step 2 Retry: Exchanging with bizToken for cross-region (API: ${apiUrl})...`);
+
     const requestBody = {
       ...this.buildBaseRequest('loginByAuthorizeCode4Vesync'),
       accountID: accountID,
       authorizeCode: authorizeCode,
       bizToken: bizToken,
       regionChange: 'lastRegion',
-      userCountryCode: countryCode,
+      userCountryCode: countryCode,  // Use actual country code (DE), not region (EU)
     };
 
     this.log.debug(`Token retry request body: ${JSON.stringify(requestBody)}`);
@@ -277,7 +266,7 @@ class Vesync extends utils.Adapter {
     try {
       const response = await this.requestClient({
         method: 'post',
-        url: `${VESYNC_API_BASE_URL_US}/user/api/accountManage/v1/loginByAuthorizeCode4Vesync`,
+        url: `${apiUrl}/user/api/accountManage/v1/loginByAuthorizeCode4Vesync`,
         headers: {
           'Content-Type': 'application/json',
           'User-Agent': VESYNC_USER_AGENT,
@@ -309,63 +298,6 @@ class Vesync extends utils.Adapter {
     }
   }
 
-  // Step 2 Alternative: Retry with different region (no bizToken)
-  async loginWithAuthorizeCodeDifferentRegion(authorizeCode, accountID, region) {
-    this.log.info(`Step 2 Alt: Trying login with region: ${region}`);
-    const requestBody = {
-      ...this.buildBaseRequest('loginByAuthorizeCode4Vesync'),
-      accountID: accountID,
-      authorizeCode: authorizeCode,
-      userCountryCode: region,
-    };
-
-    this.log.debug(`Token alt request body: ${JSON.stringify(requestBody)}`);
-
-    try {
-      const response = await this.requestClient({
-        method: 'post',
-        url: `${VESYNC_API_BASE_URL_US}/user/api/accountManage/v1/loginByAuthorizeCode4Vesync`,
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': VESYNC_USER_AGENT,
-        },
-        data: requestBody,
-      });
-
-      this.log.info(`Token alt response code: ${response.data.code}, msg: ${response.data.msg}`);
-      this.log.debug(`Token alt response full: ${JSON.stringify(response.data)}`);
-
-      if (response.data.code === 0 && response.data.result) {
-        this.log.info(`Got token with alt region, currentRegion: ${response.data.result.currentRegion}`);
-        return {
-          token: response.data.result.token,
-          accountID: response.data.result.accountID,
-          countryCode: response.data.result.countryCode,
-          currentRegion: response.data.result.currentRegion,
-          acceptLanguage: response.data.result.acceptLanguage || 'de',
-        };
-      } else {
-        // If still failing with bizToken, try with that
-        if (response.data.result && response.data.result.bizToken) {
-          this.log.warn(`Alt region also needs bizToken, retrying...`);
-          return await this.loginWithAuthorizeCodeRetry(
-            authorizeCode,
-            accountID,
-            response.data.result.bizToken,
-            response.data.result.countryCode
-          );
-        }
-        this.log.error(`Token alt failed with code: ${response.data.code}`);
-        throw new Error(`Login with alt region failed: ${response.data.msg} (code: ${response.data.code})`);
-      }
-    } catch (error) {
-      if (error.response) {
-        this.log.error(`Token alt error response: ${JSON.stringify(error.response.data)}`);
-      }
-      throw error;
-    }
-  }
-
   async login() {
     this.log.info(`Starting login for user: ${this.config.username}, region: ${this.config.region || 'EU'}`);
     this.log.debug(`TerminalId: ${this.terminalId}`);
@@ -376,25 +308,15 @@ class Vesync extends utils.Adapter {
       // Step 2: Exchange for token
       let loginResult = await this.loginWithAuthorizeCode(authResult.authorizeCode, authResult.accountID);
 
-      // Handle cross-region with bizToken
+      // Handle cross-region with bizToken (normal flow - API always returns this for EU accounts)
       if (loginResult.crossRegion) {
-        this.log.info(`Cross-region detected (account in ${loginResult.currentRegion}), retrying with bizToken...`);
+        this.log.info(`Cross-region detected, retrying with bizToken on ${loginResult.currentRegion} server...`);
         loginResult = await this.loginWithAuthorizeCodeRetry(
           authResult.authorizeCode,
           authResult.accountID,
           loginResult.bizToken,
-          loginResult.countryCode
-        );
-      }
-
-      // Handle region conflict without bizToken - retry with different region
-      if (loginResult.regionConflict) {
-        this.log.info(`Region conflict detected, retrying with region: ${loginResult.tryRegion}`);
-        // Retry Step 2 with different region (no bizToken needed)
-        loginResult = await this.loginWithAuthorizeCodeDifferentRegion(
-          authResult.authorizeCode,
-          authResult.accountID,
-          loginResult.tryRegion
+          loginResult.countryCode,
+          loginResult.currentRegion
         );
       }
 
