@@ -38,6 +38,27 @@
       }
     },
 
+    "region": {
+      "type": "select",
+      "newLine": true,
+      "sm": 2,
+      "options": [
+        { "label": "EU (Europe)", "value": "EU" },
+        { "label": "US (United States)", "value": "US" }
+      ],
+      "label": {
+        "en": "Region",
+        "de": "Region",
+        "ru": "Регион",
+        "pt": "Região",
+        "nl": "Regio",
+        "fr": "Région",
+        "it": "Regione",
+        "es": "Región",
+        "pl": "Region",
+        "zh-cn": "地区"
+      }
+    },
     "interval": {
       "type": "number",
       "newLine": true,

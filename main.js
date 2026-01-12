@@ -15,7 +15,16 @@ const crypto = require('crypto');
 const VESYNC_APP_VERSION = '5.7.80';
 const VESYNC_APP_BUILD = '693';
 const VESYNC_APP_VERSION_FULL = `VeSync ${VESYNC_APP_VERSION} build${VESYNC_APP_BUILD}`;
-const VESYNC_USER_AGENT = `VeSync/${VESYNC_APP_VERSION} (com.etekcity.vesyncPlatform; build:${VESYNC_APP_BUILD}; Android 14)`;
+const VESYNC_USER_AGENT = 'okhttp/3.12.1';
+const VESYNC_APP_ID = 'eldodkfj';
+const VESYNC_CLIENT_TYPE = 'vesyncApp';
+const VESYNC_CLIENT_VERSION = `VeSync ${VESYNC_APP_VERSION}`;
+const VESYNC_PHONE_BRAND = 'ioBroker';
+const VESYNC_PHONE_OS = 'Android';
+
+// Region-specific API URLs (from pyvesync)
+const VESYNC_API_BASE_URL_US = 'https://smartapi.vesync.com';
+const VESYNC_API_BASE_URL_EU = 'https://smartapi.vesync.eu';
 
 class Vesync extends utils.Adapter {
   /**
@@ -95,50 +104,212 @@ class Vesync extends utils.Adapter {
       12 * 60 * 60 * 1000,
     );
   }
-  async login() {
-    await this.requestClient({
-      method: 'post',
-      url: 'https://smartapi.vesync.com/cloud/v1/user/login',
-      headers: {
-        accept: '*/*',
-        'content-type': 'application/json',
-        'user-agent': VESYNC_USER_AGENT,
-        'accept-language': 'de-DE;q=1.0',
-      },
-      data: {
-        timeZone: 'Europe/Berlin',
-        acceptLanguage: 'de',
-        appVersion: VESYNC_APP_VERSION,
-        phoneBrand: 'SM N9005',
-        phoneOS: 'Android',
-        traceId: Date.now().toString(),
-        devToken: '',
-        userType: '1',
-        method: 'login',
-        email: this.config.username,
-        password: crypto.createHash('md5').update(this.config.password).digest('hex'),
-      },
-    })
-      .then((res) => {
-        this.log.debug(JSON.stringify(res.data));
-        if (res.data.result) {
-          this.log.info('Login successful');
-          this.session = res.data.result;
-          this.setState('info.connection', true, true);
-        } else {
-          this.log.error(JSON.stringify(res.data));
-        }
-      })
-      .catch((error) => {
-        this.log.error(error);
-        error.response && this.log.error(JSON.stringify(error.response.data));
+  // Get API base URL based on region
+  getApiBaseUrl() {
+    const region = this.session.currentRegion || this.config.region || 'EU';
+    return region === 'EU' ? VESYNC_API_BASE_URL_EU : VESYNC_API_BASE_URL_US;
+  }
+
+  // Build base request body for new OAuth flow
+  buildBaseRequest(method) {
+    return {
+      acceptLanguage: 'de',
+      accountID: '',
+      appVersion: VESYNC_APP_VERSION,
+      appID: VESYNC_APP_ID,
+      sourceAppID: VESYNC_APP_ID,
+      clientInfo: VESYNC_PHONE_BRAND,
+      clientType: VESYNC_CLIENT_TYPE,
+      clientVersion: VESYNC_CLIENT_VERSION,
+      debugMode: false,
+      method: method,
+      osInfo: VESYNC_PHONE_OS,
+      phoneBrand: VESYNC_PHONE_BRAND,
+      phoneOS: VESYNC_PHONE_OS,
+      terminalId: this.terminalId,
+      timeZone: 'Europe/Berlin',
+      token: '',
+      traceId: Date.now().toString(),
+      userCountryCode: this.config.region || 'EU',
+    };
+  }
+
+  // Step 1: Get Authorization Code
+  async getAuthorizationCode() {
+    this.log.debug('Step 1: Getting authorization code...');
+    const requestBody = {
+      ...this.buildBaseRequest('authByPWDOrOTM'),
+      email: this.config.username,
+      password: crypto.createHash('md5').update(this.config.password).digest('hex'),
+      authProtocolType: 'generic',
+    };
+
+    try {
+      const response = await this.requestClient({
+        method: 'post',
+        url: `${VESYNC_API_BASE_URL_US}/globalPlatform/api/accountAuth/v1/authByPWDOrOTM`,
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': VESYNC_USER_AGENT,
+        },
+        data: requestBody,
       });
+
+      this.log.debug(`Auth response: ${JSON.stringify(response.data)}`);
+
+      if (response.data.code === 0 && response.data.result) {
+        return {
+          authorizeCode: response.data.result.authorizeCode,
+          accountID: response.data.result.accountID,
+        };
+      } else {
+        throw new Error(`Auth failed: ${response.data.msg} (code: ${response.data.code})`);
+      }
+    } catch (error) {
+      if (error.response) {
+        this.log.error(`Auth error response: ${JSON.stringify(error.response.data)}`);
+      }
+      throw error;
+    }
+  }
+
+  // Step 2: Exchange Authorization Code for Token
+  async loginWithAuthorizeCode(authorizeCode, accountID) {
+    this.log.debug('Step 2: Exchanging authorization code for token...');
+    const requestBody = {
+      ...this.buildBaseRequest('loginByAuthorizeCode4Vesync'),
+      accountID: accountID,
+      authorizeCode: authorizeCode,
+      userCountryCode: this.config.region || 'EU',
+    };
+
+    try {
+      const response = await this.requestClient({
+        method: 'post',
+        url: `${VESYNC_API_BASE_URL_US}/user/api/accountManage/v1/loginByAuthorizeCode4Vesync`,
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': VESYNC_USER_AGENT,
+        },
+        data: requestBody,
+      });
+
+      this.log.debug(`Token response: ${JSON.stringify(response.data)}`);
+
+      if (response.data.code === 0 && response.data.result) {
+        return {
+          token: response.data.result.token,
+          accountID: response.data.result.accountID,
+          countryCode: response.data.result.countryCode,
+          currentRegion: response.data.result.currentRegion,
+          acceptLanguage: response.data.result.acceptLanguage || 'de',
+        };
+      } else {
+        // Handle cross-region error (codes: -11202030 or -11260022)
+        if ((response.data.code === -11202030 || response.data.code === -11260022) && response.data.result) {
+          this.log.warn('Cross-region detected, retrying with bizToken...');
+          return {
+            crossRegion: true,
+            countryCode: response.data.result.countryCode,
+            currentRegion: response.data.result.currentRegion,
+            bizToken: response.data.result.bizToken,
+          };
+        }
+        throw new Error(`Login failed: ${response.data.msg} (code: ${response.data.code})`);
+      }
+    } catch (error) {
+      if (error.response) {
+        this.log.error(`Token error response: ${JSON.stringify(error.response.data)}`);
+      }
+      throw error;
+    }
+  }
+
+  // Step 2 Retry: With bizToken for cross-region
+  async loginWithAuthorizeCodeRetry(authorizeCode, accountID, bizToken, countryCode) {
+    this.log.debug('Step 2 Retry: Exchanging with bizToken for cross-region...');
+    const requestBody = {
+      ...this.buildBaseRequest('loginByAuthorizeCode4Vesync'),
+      accountID: accountID,
+      authorizeCode: authorizeCode,
+      bizToken: bizToken,
+      regionChange: 'lastRegion',
+      userCountryCode: countryCode,
+    };
+
+    try {
+      const response = await this.requestClient({
+        method: 'post',
+        url: `${VESYNC_API_BASE_URL_US}/user/api/accountManage/v1/loginByAuthorizeCode4Vesync`,
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': VESYNC_USER_AGENT,
+        },
+        data: requestBody,
+      });
+
+      this.log.debug(`Token retry response: ${JSON.stringify(response.data)}`);
+
+      if (response.data.code === 0 && response.data.result) {
+        return {
+          token: response.data.result.token,
+          accountID: response.data.result.accountID,
+          countryCode: response.data.result.countryCode,
+          currentRegion: response.data.result.currentRegion,
+          acceptLanguage: response.data.result.acceptLanguage || 'de',
+        };
+      } else {
+        throw new Error(`Login retry failed: ${response.data.msg} (code: ${response.data.code})`);
+      }
+    } catch (error) {
+      if (error.response) {
+        this.log.error(`Token retry error response: ${JSON.stringify(error.response.data)}`);
+      }
+      throw error;
+    }
+  }
+
+  async login() {
+    try {
+      // Step 1: Get authorization code
+      const authResult = await this.getAuthorizationCode();
+      this.log.debug(`Got authorization code for account: ${authResult.accountID}`);
+
+      // Step 2: Exchange for token
+      let loginResult = await this.loginWithAuthorizeCode(authResult.authorizeCode, authResult.accountID);
+
+      // Handle cross-region by retrying with bizToken
+      if (loginResult.crossRegion) {
+        this.log.info(`Cross-region detected (account in ${loginResult.currentRegion}), retrying...`);
+        loginResult = await this.loginWithAuthorizeCodeRetry(
+          authResult.authorizeCode,
+          authResult.accountID,
+          loginResult.bizToken,
+          loginResult.countryCode
+        );
+      }
+
+      this.log.info('Login successful (2-step OAuth)');
+      this.session = {
+        token: loginResult.token,
+        accountID: loginResult.accountID,
+        countryCode: loginResult.countryCode,
+        currentRegion: loginResult.currentRegion || (loginResult.countryCode === 'DE' ? 'EU' : 'US'),
+        acceptLanguage: loginResult.acceptLanguage,
+      };
+      this.setState('info.connection', true, true);
+    } catch (error) {
+      this.log.error(`Login failed: ${error.message}`);
+      if (error.response) {
+        this.log.error(JSON.stringify(error.response.data));
+      }
+    }
   }
 
   async getDeviceList() {
     await this.requestClient({
       method: 'post',
-      url: 'https://smartapi.vesync.com/cloud/v2/deviceManaged/devices',
+      url: `${this.getApiBaseUrl()}/cloud/v2/deviceManaged/devices`,
       headers: {
         tk: this.session.token,
         accountid: this.session.accountID,
@@ -307,7 +478,7 @@ class Vesync extends utils.Adapter {
   async updateDevices() {
     const statusArray = [
       {
-        url: 'https://smartapi.vesync.com/cloud/v2/deviceManaged/bypassV2',
+        url: `${this.getApiBaseUrl()}/cloud/v2/deviceManaged/bypassV2`,
         path: 'status',
         desc: 'Status of the device',
       },
@@ -393,12 +564,12 @@ class Vesync extends utils.Adapter {
   async getHealthData() {
     const statusArray = [
       {
-        url: 'https://smartapi.vesync.com/cloud/v1/user/getUserInfo',
+        url: `${this.getApiBaseUrl()}/cloud/v1/user/getUserInfo`,
         path: 'userInfo',
         desc: 'User Info',
       },
       {
-        url: 'https://smartapi.vesync.com/iot/api/fitnessScale/getWeighingDataV4',
+        url: `${this.getApiBaseUrl()}/iot/api/fitnessScale/getWeighingDataV4`,
         path: 'weightingData',
         desc: 'Weighting Data v4',
         data: {
@@ -412,12 +583,12 @@ class Vesync extends utils.Adapter {
         },
       },
       {
-        url: 'https://smartapi.vesync.com/cloud/v3/user/getHealthyHomeData',
+        url: `${this.getApiBaseUrl()}/cloud/v3/user/getHealthyHomeData`,
         path: 'healthHomeData',
         desc: 'Health Home Data',
       },
       {
-        url: 'https://smartapi.vesync.com/cloud/v3/user/getAllSubUserV3',
+        url: `${this.getApiBaseUrl()}/cloud/v3/user/getAllSubUserV3`,
         path: 'subUser',
         desc: 'Sub User Information v3',
       },
@@ -651,9 +822,8 @@ class Vesync extends utils.Adapter {
         if (id.split('.')[4] === 'cookMode') {
           await this.requestClient({
             method: 'post',
-            url: 'https://smartapi.vesync.com/cloud/v2/deviceManaged/bypassV2',
+            url: `${this.getApiBaseUrl()}/cloud/v2/deviceManaged/bypassV2`,
             headers: {
-              Host: 'smartapi.vesync.com',
               accept: '*/*',
               'content-type': 'application/json',
               'user-agent': VESYNC_USER_AGENT,
@@ -738,9 +908,8 @@ class Vesync extends utils.Adapter {
           }
           await this.requestClient({
             method: 'post',
-            url: 'https://smartapi.vesync.com/cloud/v2/deviceManaged/bypassV2',
+            url: `${this.getApiBaseUrl()}/cloud/v2/deviceManaged/bypassV2`,
             headers: {
-              Host: 'smartapi.vesync.com',
               accept: '*/*',
               'content-type': 'application/json',
               'user-agent': VESYNC_USER_AGENT,
