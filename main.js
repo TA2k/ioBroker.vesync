@@ -386,6 +386,22 @@ class Vesync extends utils.Adapter {
               { command: 'setDisplay', name: 'True = On, False = Off' },
               { command: 'setChildLock', name: 'True = On, False = Off' },
               { command: 'setPurifierMode', name: 'sleep or auto', def: 'auto', type: 'string', role: 'text' },
+              { command: 'setFanMode', name: 'normal, turbo, sleep, auto', def: 'normal', type: 'string', role: 'text' },
+              { command: 'setFanSpeed', name: 'Fan speed level (1-12)', type: 'number', def: 1, role: 'level' },
+              { command: 'setOscillation', name: 'True = On, False = Off' },
+              { command: 'setBrightness', name: 'Bulb brightness (1-100)', type: 'number', def: 100, role: 'level.dimmer' },
+              { command: 'setColorTemp', name: 'Color temperature (2700-6500)', type: 'number', def: 4000, role: 'level.color.temperature' },
+              { command: 'setNightLight', name: 'on, off, dim or auto', def: 'off', type: 'string', role: 'text' },
+              // RGB Bulb color
+              { command: 'setColorHue', name: 'Hue (0-360)', type: 'number', def: 0, role: 'level.color.hue' },
+              { command: 'setColorSaturation', name: 'Saturation (0-100)', type: 'number', def: 100, role: 'level.color.saturation' },
+              { command: 'setColorMode', name: 'white or color', def: 'white', type: 'string', role: 'text' },
+              // Dimmer switch
+              { command: 'setDimmerBrightness', name: 'Dimmer brightness (0-100)', type: 'number', def: 100, role: 'level.dimmer' },
+              // Thermostat
+              { command: 'setTargetTemp', name: 'Target temperature', type: 'number', def: 21, role: 'level.temperature' },
+              { command: 'setThermostatMode', name: 'off, heat, cool, auto', def: 'auto', type: 'string', role: 'text' },
+              { command: 'setThermostatFanMode', name: 'auto, on, circulate', def: 'auto', type: 'string', role: 'text' },
               {
                 command: 'startCook',
                 name: 'Start Cooking',
@@ -721,24 +737,44 @@ class Vesync extends utils.Adapter {
     }
     let method = 'getHumidifierStatus';
     let data = {};
+    // Humidifiers
     if (
       device.deviceType.includes('LUH-') ||
       device.deviceType.includes('Classic') ||
       device.deviceType.includes('LV600') ||
-      device.deviceType.includes('Dual')
+      device.deviceType.includes('Dual') ||
+      device.deviceType.includes('LEH-')
     ) {
       method = 'getHumidifierStatus';
     }
+    // Purifiers
     if (device.deviceType.includes('LAP-') || device.deviceType.includes('Core') || device.deviceType.includes('LV-')) {
       method = 'getPurifierStatus';
     }
-    if (device.deviceType.includes('LAP-') || device.deviceType.includes('Core') || device.deviceType.includes('LV-')) {
-      method = 'getPurifierStatus';
+    // Fans
+    if (device.deviceType.includes('LTF-') || device.deviceType.includes('LPF-')) {
+      method = 'getFanStatus';
     }
-    if (device.deviceType.startsWith('WHOGPLUG') || device.deviceType.startsWith('WYZYOG')) {
+    // Outlets
+    if (device.deviceType.startsWith('WHOGPLUG') || device.deviceType.startsWith('WYZYOG') ||
+        device.deviceType.startsWith('ESW') || device.deviceType.startsWith('ESO') ||
+        device.deviceType.startsWith('wifi-switch')) {
       method = 'getOutletStatus';
     }
-    if (device.deviceType.startsWith('BS')) {
+    // Switches
+    if (device.deviceType.startsWith('ESWL') || device.deviceType.startsWith('ESWD')) {
+      method = 'getSwitchStatus';
+    }
+    // Bulbs
+    if (device.deviceType.startsWith('ESL') || device.deviceType.startsWith('XYD')) {
+      method = 'getLightStatus';
+    }
+    // Thermostats
+    if (device.deviceType.startsWith('LTM-')) {
+      method = 'getThermostatStatus';
+    }
+    // Smart Plugs with property method
+    if (device.deviceType.startsWith('BS') || device.deviceType.startsWith('BSDOG')) {
       method = 'getProperty';
       data = {
         properties: [
@@ -905,6 +941,87 @@ class Vesync extends utils.Adapter {
             } catch (error) {
               this.log.error(error);
             }
+          }
+          // Fan commands
+          if (command === 'setFanMode') {
+            data = {
+              mode: state.val,
+            };
+          }
+          if (command === 'setFanSpeed') {
+            data = {
+              level: state.val,
+              id: 0,
+            };
+            command = 'setLevel';
+          }
+          if (command === 'setOscillation') {
+            data = {
+              enabled: state.val,
+            };
+          }
+          // Bulb commands
+          if (command === 'setBrightness') {
+            data = {
+              brightness: state.val,
+            };
+          }
+          if (command === 'setColorTemp') {
+            data = {
+              colorTemp: state.val,
+            };
+          }
+          // Nightlight
+          if (command === 'setNightLight') {
+            data = {
+              night_light: state.val,
+            };
+          }
+          // RGB Bulb color
+          if (command === 'setColorHue') {
+            data = {
+              hue: state.val,
+            };
+            command = 'setLightColor';
+          }
+          if (command === 'setColorSaturation') {
+            data = {
+              saturation: state.val,
+            };
+            command = 'setLightColor';
+          }
+          if (command === 'setColorMode') {
+            data = {
+              colorMode: state.val,
+            };
+            command = 'setLightColorMode';
+          }
+          // Dimmer switch
+          if (command === 'setDimmerBrightness') {
+            data = {
+              brightness: state.val,
+            };
+            command = 'setBrightness';
+          }
+          // Thermostat
+          if (command === 'setTargetTemp') {
+            data = {
+              targetTemp: state.val,
+            };
+          }
+          if (command === 'setThermostatMode') {
+            const modeMap = { off: 0, heat: 1, cool: 2, auto: 3 };
+            data = {
+              workMode: modeMap[state.val] !== undefined ? modeMap[state.val] : 3,
+            };
+            command = 'setThermostatWorkMode';
+          }
+          if (command === 'setThermostatFanMode') {
+            const fanModeMap = { auto: 1, on: 2, circulate: 3 };
+            data = {
+              fanMode: fanModeMap[state.val] !== undefined ? fanModeMap[state.val] : 1,
+            };
+            command = 'setThermostatFanMode';
           }
           await this.requestClient({
             method: 'post',
