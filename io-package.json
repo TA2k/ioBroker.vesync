@@ -84,7 +84,10 @@
     "keywords": [
       "vesync"
     ],
-    "license": "MIT",
+    "licenseInformation": {
+      "type": "free",
+      "license": "MIT"
+    },
     "platform": "Javascript/Node.js",
     "icon": "vesync.png",
     "enabled": true,
