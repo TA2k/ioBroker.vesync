@@ -205,9 +205,9 @@ class Vesync extends utils.Adapter {
           acceptLanguage: response.data.result.acceptLanguage || 'de',
         };
       } else {
-        // Handle cross-region error (codes: -11202030 or -11260022)
-        if ((response.data.code === -11202030 || response.data.code === -11260022) && response.data.result) {
-          this.log.warn('Cross-region detected, retrying with bizToken...');
+        // Handle cross-region error - check for bizToken in response (works for all region error codes)
+        if (response.data.result && response.data.result.bizToken) {
+          this.log.warn(`Cross-region detected (${response.data.msg}), retrying with bizToken...`);
           return {
             crossRegion: true,
             countryCode: response.data.result.countryCode,

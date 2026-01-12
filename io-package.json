@@ -1,9 +1,9 @@
 {
   "common": {
     "name": "vesync",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "news": {
-      "1.0.0": {
+      "1.0.1": {
         "en": "fix login\nadd new devices",
         "de": "zurück zur übersicht\nneue geräte hinzufügen",
         "ru": "исправить логин\nдобавить новые устройства",
@@ -92,12 +92,8 @@
       "pl": "Adapter do VeSync",
       "zh-cn": "VeSync 适配器"
     },
-    "authors": [
-      "TA2k <tombox2020@gmail.com>"
-    ],
-    "keywords": [
-      "vesync"
-    ],
+    "authors": ["TA2k <tombox2020@gmail.com>"],
+    "keywords": ["vesync"],
     "licenseInformation": {
       "type": "free",
       "license": "MIT"
@@ -128,12 +124,8 @@
       }
     ]
   },
-  "encryptedNative": [
-    "password"
-  ],
-  "protectedNative": [
-    "password"
-  ],
+  "encryptedNative": ["password"],
+  "protectedNative": ["password"],
   "native": {
     "username": "",
     "password": "",
