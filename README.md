@@ -112,6 +112,9 @@ Stop:
 
 ## Changelog
 
+### **WORK IN PROGRESS**
+- (iobroker-bot) Adapter requires node.js >= 20 now.
+
 ### 1.0.3 (2026-01-12)
 
 - fix login
