@@ -487,6 +487,49 @@ class Vesync extends utils.Adapter {
                 type: 'string',
                 role: 'json',
               },
+              {
+                command: 'startMultiCook',
+                name: 'Start Multi/Dual Zone Cooking',
+                def: `{
+                  "syncType": 0,
+                  "workChamber": 4,
+                  "tempUnit": "celsius",
+                  "accountId": "${this.session.accountID}",
+                  "readyStart": true,
+                  "cookConfigs": [
+                    {
+                      "cookSetTime": 600,
+                      "cookTemp": 180,
+                      "mode": "AirFry",
+                      "chamber": 1
+                    },
+                    {
+                      "cookSetTime": 480,
+                      "cookTemp": 200,
+                      "mode": "AirFry",
+                      "chamber": 2
+                    }
+                  ]
+              }`,
+                type: 'string',
+                role: 'json',
+              },
+              {
+                command: 'preheatCook',
+                name: 'Start Preheat',
+                def: '{}',
+                type: 'string',
+                role: 'json',
+              },
+              {
+                command: 'setTimeOrTemp',
+                name: 'Set Time or Temp during cooking',
+                def: '{"cookSetTime": 600, "cookSetTemp": 180}',
+                type: 'string',
+                role: 'json',
+              },
+              { command: 'setLightSwitch', name: 'Light On/Off' },
+              { command: 'quitSyncFinish', name: 'Quit Sync Finish Mode' },
               { command: 'setHumidityMode', name: 'sleep, manual or auto', def: 'auto', type: 'string', role: 'text' },
               {
                 command: 'setProperty',
@@ -606,6 +649,64 @@ class Vesync extends utils.Adapter {
             this.log.error(element.url);
             this.log.error(error);
             error.response && this.log.error(JSON.stringify(error.response.data));
+          });
+      }
+    }
+    for (const device of this.deviceArray) {
+      if (device.deviceType && device.deviceType.startsWith('CA')) {
+        await this.requestClient({
+          method: 'post',
+          url: `${this.getApiBaseUrl()}/cloud/v2/deviceManaged/bypassV2`,
+          headers: {
+            'content-type': 'application/json',
+            'user-agent': 'ioBroker',
+            accept: '*/*',
+          },
+          data: JSON.stringify({
+            acceptLanguage: 'de',
+            accountID: this.session.accountID,
+            appVersion: VESYNC_APP_VERSION_FULL,
+            cid: device.cid,
+            configModule: device.configModule,
+            debugMode: false,
+            deviceRegion: 'EU',
+            method: 'bypassV2',
+            payload: {
+              data: {},
+              method: 'getAirfryerMultiStatus',
+              source: 'APP',
+            },
+            phoneBrand: 'iPhone 8 Plus',
+            phoneOS: 'iOS 14.8',
+            timeZone: 'Europe/Berlin',
+            token: this.session.token,
+            traceId: Date.now().toString(),
+            userCountryCode: 'DE',
+          }),
+        })
+          .then(async (res) => {
+            this.log.debug(JSON.stringify(res.data));
+            if (!res.data) {
+              return;
+            }
+            if (res.data.code != 0) {
+              return;
+            }
+            let data = res.data.result;
+            if (data.result) {
+              data = data.result;
+            }
+            this.json2iob.parse(device.cid + '.multiStatus', data, {
+              forceIndex: true,
+              write: true,
+              channelName: 'Multi Zone Status',
+            });
+          })
+          .catch((error) => {
+            this.log.debug('getAirfryerMultiStatus not supported for ' + device.cid);
+            if (error.response) {
+              this.log.debug(JSON.stringify(error.response.data));
+            }
           });
       }
     }
@@ -969,6 +1070,19 @@ class Vesync extends utils.Adapter {
             }
           }
           if (command === 'endCook') {
+            data = {};
+          }
+          if (command === 'startMultiCook' || command === 'preheatCook' || command === 'setTimeOrTemp') {
+            try {
+              data = JSON.parse(state.val);
+            } catch (error) {
+              this.log.error(error);
+            }
+          }
+          if (command === 'setLightSwitch') {
+            data = { enabled: state.val };
+          }
+          if (command === 'quitSyncFinish') {
             data = {};
           }
           if (command === 'setProperty') {
