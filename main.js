@@ -421,7 +421,7 @@ class Vesync extends utils.Adapter {
               { command: 'endCook', name: 'True = EndCook' },
               { command: 'setDisplay', name: 'True = On, False = Off' },
               { command: 'setChildLock', name: 'True = On, False = Off' },
-              { command: 'setPurifierMode', name: 'sleep or auto', def: 'auto', type: 'string', role: 'text' },
+              { command: 'setPurifierMode', name: 'sleep, auto, pet, turbo or pollen', def: 'auto', type: 'string', role: 'text' },
               { command: 'setFanMode', name: 'normal, turbo, sleep, auto', def: 'normal', type: 'string', role: 'text' },
               { command: 'setFanSpeed', name: 'Fan speed level (1-12)', type: 'number', def: 1, role: 'level' },
               { command: 'setOscillation', name: 'True = On, False = Off' },
@@ -530,6 +530,31 @@ class Vesync extends utils.Adapter {
               },
               { command: 'setLightSwitch', name: 'Light On/Off' },
               { command: 'quitSyncFinish', name: 'Quit Sync Finish Mode' },
+              {
+                command: 'startStepCook',
+                name: 'Start Step/Program Cooking (Oven)',
+                def: `{
+                  "accountId": "${this.session.accountID}",
+                  "hasPreheat": 1,
+                  "preheatTemp": 180,
+                  "readyStart": true,
+                  "tempUnit": "celsius",
+                  "stepArray": [
+                    {
+                      "cookSetTime": 600,
+                      "cookTemp": 180,
+                      "mode": "Bake",
+                      "level": 0,
+                      "shakeTime": 0,
+                      "windMode": 0
+                    }
+                  ]
+                }`,
+                type: 'string',
+                role: 'json',
+              },
+              { command: 'skipStep', name: 'Skip current step (Oven)' },
+              { command: 'setTempUnit', name: 'Set Temp Unit (f or c)', def: 'c', type: 'string', role: 'text' },
               { command: 'setHumidityMode', name: 'sleep, manual or auto', def: 'auto', type: 'string', role: 'text' },
               {
                 command: 'setProperty',
@@ -653,7 +678,8 @@ class Vesync extends utils.Adapter {
       }
     }
     for (const device of this.deviceArray) {
-      if (device.deviceType && device.deviceType.startsWith('CA')) {
+      const isOven = device.configModule && (device.configModule.includes('Oven') || device.configModule.includes('OVN'));
+      if (device.deviceType && device.deviceType.startsWith('CA') && !isOven) {
         await this.requestClient({
           method: 'post',
           url: `${this.getApiBaseUrl()}/cloud/v2/deviceManaged/bypassV2`,
@@ -850,6 +876,7 @@ class Vesync extends utils.Adapter {
     }
 
     if (device.deviceType.startsWith('CA')) {
+      const isOven = device.configModule && (device.configModule.includes('Oven') || device.configModule.includes('OVN'));
       return {
         acceptLanguage: 'de',
         accountID: this.session.accountID,
@@ -861,7 +888,7 @@ class Vesync extends utils.Adapter {
         method: 'bypassV2',
         payload: {
           data: {},
-          method: 'getAirfryerStatus',
+          method: isOven ? 'getOvenStatusV2' : 'getAirfryerStatus',
           source: 'APP',
         },
         phoneBrand: 'iPhone 8 Plus',
@@ -1072,7 +1099,7 @@ class Vesync extends utils.Adapter {
           if (command === 'endCook') {
             data = {};
           }
-          if (command === 'startMultiCook' || command === 'preheatCook' || command === 'setTimeOrTemp') {
+          if (command === 'startMultiCook' || command === 'preheatCook' || command === 'setTimeOrTemp' || command === 'startStepCook') {
             try {
               data = JSON.parse(state.val);
             } catch (error) {
@@ -1082,8 +1109,11 @@ class Vesync extends utils.Adapter {
           if (command === 'setLightSwitch') {
             data = { enabled: state.val };
           }
-          if (command === 'quitSyncFinish') {
+          if (command === 'quitSyncFinish' || command === 'skipStep') {
             data = {};
+          }
+          if (command === 'setTempUnit') {
+            data = { unit: state.val };
           }
           if (command === 'setProperty') {
             try {
