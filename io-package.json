@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "vesync",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "news": {
+      "1.0.4": {
+        "en": "Add Cosori Oven support (CS130, CS125, CS100, AG500) with getOvenStatusV2, startStepCook, skipStep, setTempUnit\nAdd Cosori Dual Blaze TwinFry multi-zone support (getAirfryerMultiStatus, startMultiCook, quitSyncFinish)\nAdd Purifier pet mode (setPurifierMode: pet, turbo, pollen)",
+        "de": "Cosori Ofenunterstützung (CS130, CS125, CS100, AG500) mit getOvenStatusV2, startStepCook, skipStep, setTempUnit\nFügen Sie Cosori Dual Blaze TwinFry Multizone Unterstützung hinzu (getAirfryerMultiStatus, startMultiCook, quitSyncFinish)\nHinzufügen Purifier Tiermodus (setPurifierMode: pet, turbo, pollen)",
+        "ru": "Добавить поддержку Cosori Oven (CS130, CS125, CS100, AG500) с getOvenStatusV2, startStepCook, skipStep, setTempUnit\nДобавить мультизональную поддержку Cosori Dual Blaze TwinFry (getAirfryerMultiStatus, startMultiCook, quitSyncFinish)\nДобавить режим очистки домашних животных (setPurifierMode: домашний питомец, турбо, пыльца)",
+        "pt": "Adicionar suporte ao forno Cosori (CS130, CS125, CS100, AG500) com getOvenStatusV2, startStepCook, skipStep, setTempUnit\nAdicionar suporte a multi-zonas Cosori Dual Blaze TwinFry (getAirfryerMultiStatus, startMultiCook, quitSyncFinish)\nAdicionar modo de animal de estimação purificador (setPurifierMode: animal de estimação, turbo, pólen)",
+        "nl": "Voeg Cosori Oven ondersteuning (CS130, CS125, CS100, AG500) met getOvenStatusV2, startStepCook, skipStep, setTempUnit\nVoeg Cosori Dual Blaze TwinFry multi-zone ondersteuning (getAirfryerMultiStatus, startMultiCook, stopSyncFinish)\nZuiveraar huisdiermodus toevoegen (setPurifierMode: huisdier, turbo, pollen)",
+        "fr": "Ajouter le support Cosori Oven (CS130, CS125, CS100, AG500) avec getOvenStatusV2, startStepCook, skipStep, setTempUnit\nAjouter le support multizone Cosori Dual Blaze TwinFry (getAirfryerMultiStatus, startMultiCook, quitSyncFinish)\nAjouter le mode Purifier animal (setPurifierMode: animal de compagnie, turbo, pollen)",
+        "it": "Aggiungi supporto Cosori Forno (CS130, CS125, CS100, AG500) con getOvenStatusV2, startStepCook, skipStep, setTempUnit\nAggiungi Cosori Dual Blaze TwinFry supporto multizona (getAirfryerMultiStatus, startMultiCook, quitSyncFinish)\nAggiungi la modalità Purifier pet (setPurifierMode: pet, turbo, polline)",
+        "es": "Añadir soporte Cosori Oven (CS130, CS125, CS100, AG500) con getOvenStatusV2, startStepCook, skipStep, setTempUnit\nAñadir Cosori Dual Blaze TwinFry multi-zone support (getAirfryerMultiStatus, startMultiCook, quitSyncFinish)\nAñadir modo de mascota purificador (setPurifierMode: pet, turbo, pollen)",
+        "pl": "Dodaj wsparcie kuchenne Cosori (CS130, CS125, CS100, AG500) z getovenStatusV2, startStepCook, SkipStep, setTempus Unit\nDodaj Cosori Dual Blaze TwinFry wielostrefowe wsparcie (getAirfryerMultiStatus, startMultiCook, quitSyncFinal)\nDodaj tryb purifier (setPurifierMode: pet, turbo, pyłek)",
+        "uk": "Додати підтримку Cosori Oven (CS130, CS125, CS100, AG500) з getOvenStatusV2, початокStepCook, пропуститиStep, встановитиTempUnit\nДодати Cosori Dual Blaze TwinFry багатозонний супровід (getAirfryerMultiStatus, startMultiCook, quitSyncFinish)\nДодати режим очищувача домашніх тварин (setPurifierMode: вихованець, турбо, пилок)",
+        "zh-cn": "添加 Cosori Oven 支持( CS 130, CS 125, CS 100, AG500) 与 getOvenStatusV2, startStepCook, chopStep, setTemp Unit\n添加Cosori Dual Blaze TwinFry 多区支持( get Airfryer MultiStatus, 启动MultiCook, 退出同步)\n添加纯洁器宠物模式(设置纯洁器模式:宠物、涡轮、花粉)"
+      },
       "1.0.3": {
         "en": "fix login\nadd new devices",
         "de": "zurück zur übersicht\nneue geräte hinzufügen",
@@ -62,10 +75,6 @@
       "0.0.5": {
         "en": "added new BSD Sockets",
         "de": "Neue BSD-Steckdosen hinzugefügt"
-      },
-      "0.0.4": {
-        "en": "added support for cookMode",
-        "de": "Unterstützung für cookMode hinzugefügt"
       }
     },
     "titleLang": {
@@ -92,8 +101,12 @@
       "pl": "Adapter do VeSync",
       "zh-cn": "VeSync 适配器"
     },
-    "authors": ["TA2k <tombox2020@gmail.com>"],
-    "keywords": ["vesync"],
+    "authors": [
+      "TA2k <tombox2020@gmail.com>"
+    ],
+    "keywords": [
+      "vesync"
+    ],
     "licenseInformation": {
       "type": "free",
       "license": "MIT"
@@ -124,8 +137,12 @@
       }
     ]
   },
-  "encryptedNative": ["password"],
-  "protectedNative": ["password"],
+  "encryptedNative": [
+    "password"
+  ],
+  "protectedNative": [
+    "password"
+  ],
   "native": {
     "username": "",
     "password": "",
