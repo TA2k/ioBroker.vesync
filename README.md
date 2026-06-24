@@ -117,6 +117,9 @@ Stop:
 - Add Cosori Dual Blaze TwinFry multi-zone support (getAirfryerMultiStatus, startMultiCook, quitSyncFinish)
 - Add Purifier pet mode (setPurifierMode: pet, turbo, pollen)
 
+### **WORK IN PROGRESS**
+- (copilot) Adapter requires node.js >= 22 now
+
 ### 1.0.3 (2026-01-12)
 
 - fix login
