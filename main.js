@@ -568,6 +568,7 @@ class Vesync extends utils.Adapter {
               { command: 'setLevel-mist', name: 'set Level Mist', type: 'number', def: 10, role: 'level' },
               { command: 'setLevel-wind', name: 'set Level Wind', type: 'number', def: 10, role: 'level' },
               { command: 'setLevel-warm', name: 'set Level Warm', type: 'number', def: 10, role: 'level' },
+              { command: 'setLightDetection', name: 'Vital: light detection True = On, False = Off' },
             ];
             if (device.cid) {
               remoteArray.forEach((remote) => {
@@ -1202,6 +1203,30 @@ class Vesync extends utils.Adapter {
               fanMode: fanModeMap[state.val] !== undefined ? fanModeMap[state.val] : 1,
             };
             command = 'setThermostatFanMode';
+          }
+          // Levoit Vital series (LAP-V102S, LAP-V201S, ...) use a different payload format
+          const vitalDevice = this.deviceArray.find((d) => d.cid === deviceId);
+          if (vitalDevice && /^LAP-V\d/.test(vitalDevice.deviceType || '')) {
+            const toInt = (v) => (v === true || v === 1 || v === '1' || v === 'true' ? 1 : 0);
+            if (command === 'setSwitch') {
+              data = { powerSwitch: toInt(state.val), switchIdx: 0 };
+            }
+            if (command === 'setPurifierMode') {
+              data = { workMode: state.val };
+            }
+            if (command === 'setLevel') {
+              data = { levelIdx: 0, levelType: 'wind', manualSpeedLevel: Number(state.val) };
+            }
+            if (command === 'setDisplay') {
+              data = { screenSwitch: toInt(state.val) };
+            }
+            if (command === 'setChildLock') {
+              data = { childLockSwitch: toInt(state.val) };
+            }
+            if (command === 'setLightDetection') {
+              data = { lightDetectionSwitch: toInt(state.val) };
+            }
+            this.log.debug(`Vital command ${command}: ${JSON.stringify(data)}`);
           }
           await this.requestClient({
             method: 'post',
