@@ -422,9 +422,24 @@ class Vesync extends utils.Adapter {
               { command: 'setDisplay', name: 'True = On, False = Off' },
               { command: 'setChildLock', name: 'True = On, False = Off' },
               { command: 'setPurifierMode', name: 'sleep, auto, pet, turbo or pollen', def: 'auto', type: 'string', role: 'text' },
-              { command: 'setFanMode', name: 'normal, turbo, sleep, auto', def: 'normal', type: 'string', role: 'text' },
+              { command: 'setFanMode', name: 'normal, turbo, eco, sleep, advancedSleep, auto', def: 'normal', type: 'string', role: 'text' },
               { command: 'setFanSpeed', name: 'Fan speed level (1-12)', type: 'number', def: 1, role: 'level' },
-              { command: 'setOscillation', name: 'True = On, False = Off' },
+              { command: 'setOscillation', name: 'Horizontal oscillation: True = On, False = Off' },
+              { command: 'setVerticalOscillation', name: 'Vertical oscillation (3D pedestal fans): True = On, False = Off' },
+              {
+                command: 'setOscillationCoordinate',
+                name: 'Target head angle JSON ({"yaw": 0-90, "pitch": 0-120})',
+                def: '{"yaw": 45, "pitch": 90}',
+                type: 'string',
+                role: 'json',
+              },
+              {
+                command: 'setOscillationRange',
+                name: 'Custom oscillation range JSON (left/right or top/bottom)',
+                def: '{"horizontalOscillationState": 1, "actType": "diy", "left": 0, "right": 90}',
+                type: 'string',
+                role: 'json',
+              },
               { command: 'setBrightness', name: 'Bulb brightness (1-100)', type: 'number', def: 100, role: 'level.dimmer' },
               { command: 'setColorTemp', name: 'Color temperature (2700-6500)', type: 'number', def: 4000, role: 'level.color.temperature' },
               { command: 'setNightLight', name: 'on, off, dim or auto', def: 'off', type: 'string', role: 'text' },
@@ -1227,6 +1242,51 @@ class Vesync extends utils.Adapter {
               data = { lightDetectionSwitch: toInt(state.val) };
             }
             this.log.debug(`Vital command ${command}: ${JSON.stringify(data)}`);
+          }
+          // Levoit Pedestal Air Circulator Fans (LPF-* series, e.g. LPF-R432S-AEU, LPF-R382S-AEU)
+          if (vitalDevice && (vitalDevice.deviceType || '').includes('LPF-')) {
+            const toInt = (v) => (v === true || v === 1 || v === '1' || v === 'true' ? 1 : 0);
+            const origCommand = id.split('.')[4].split('-')[0];
+            if (origCommand === 'setSwitch') {
+              data = { powerSwitch: toInt(state.val), switchIdx: 0 };
+              command = 'setSwitch';
+            } else if (origCommand === 'setFanMode') {
+              data = { workMode: String(state.val) };
+              command = 'setFanMode';
+            } else if (origCommand === 'setFanSpeed') {
+              data = { levelIdx: 0, levelType: 'wind', manualSpeedLevel: Number(state.val) };
+              command = 'setLevel';
+            } else if (origCommand === 'setOscillation') {
+              data = { horizontalOscillationState: toInt(state.val), actType: 'default' };
+              command = 'setOscillationStatus';
+            } else if (origCommand === 'setVerticalOscillation') {
+              data = { verticalOscillationState: toInt(state.val), actType: 'default' };
+              command = 'setOscillationStatus';
+            } else if (origCommand === 'setOscillationCoordinate') {
+              try {
+                const parsed = typeof state.val === 'string' ? JSON.parse(state.val) : state.val;
+                data = { yaw: Number(parsed.yaw), pitch: Number(parsed.pitch) };
+                command = 'setOscillationCoordinate';
+              } catch (error) {
+                this.log.error(`Invalid JSON for setOscillationCoordinate: ${error}`);
+                return;
+              }
+            } else if (origCommand === 'setOscillationRange') {
+              try {
+                data = typeof state.val === 'string' ? JSON.parse(state.val) : state.val;
+                command = 'setOscillationStatus';
+              } catch (error) {
+                this.log.error(`Invalid JSON for setOscillationRange: ${error}`);
+                return;
+              }
+            } else if (origCommand === 'setDisplay') {
+              data = { screenSwitch: toInt(state.val) };
+              command = 'setDisplay';
+            } else if (origCommand === 'setChildLock') {
+              data = { childLock: toInt(state.val) };
+              command = 'setChildLock';
+            }
+            this.log.debug(`LPF fan command ${command}: ${JSON.stringify(data)}`);
           }
           await this.requestClient({
             method: 'post',
